@@ -56,38 +56,80 @@ Proyek ini dibangun menggunakan arsitektur modern yang memisahkan antara *Backen
 
 ---
 
-## 🚀 Panduan Eksekusi (Runbook)
+## 🚀 Panduan Instalasi & Eksekusi
 
-Karena ini menggunakan arsitektur berbasis *microservices*, Anda perlu menjalankan *Backend*, *Web*, dan *Mobile* di tab terminal yang terpisah. Disarankan menggunakan **Anaconda Prompt**.
+Proyek ini menggunakan arsitektur *monorepo* (gabungan beberapa aplikasi). Oleh karena itu, Anda harus menginstal dependensi (library) dan menjalankan masing-masing komponen di **3 tab terminal (Anaconda Prompt) yang berbeda**.
 
-### 1. Menjalankan Backend Spasial (FastAPI)
-Buka terminal baru dan masuk ke folder *backend*:
+### 1. 🟢 Persiapan & Menjalankan Backend (FastAPI)
+Buka tab terminal pertama (Anaconda Prompt), aktifkan environment Python Anda, lalu masuk ke folder backend:
+
+**A. Instalasi Library**
 ```bash
+# Masuk ke folder backend
 cd kecamapkita-backend
-# Pastikan environment .env telah disesuaikan (masukkan GEMINI_API_KEY)
+
+# (Opsional) Jika Anda belum membuat/mengaktifkan environment:
+# conda create -n kecamapkita-env python=3.12 -y
+# conda activate kecamapkita-env
+
+# Instal semua library Python yang dibutuhkan (FastAPI, SQLAlchemy, dll)
+pip install -r requirements.txt
+```
+
+**B. Menjalankan Server Backend**
+```bash
+# Pastikan file .env sudah diatur sesuai kebutuhan
+# Lalu nyalakan server backend:
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-- API Documentation (Swagger) tersedia di: `http://localhost:8000/docs`
-- Untuk mempopulasikan kembali database (*Seeding*), jalankan: `python seed.py`
+- API Dokumentasi (Swagger) dapat diakses di: `http://localhost:8000/docs`
+- Jika ingin memasukkan data awal destinasi (Seeding), hentikan server sebentar (`Ctrl+C`), jalankan `python seed.py`, lalu nyalakan kembali.
 
-### 2. Menjalankan Web Platform (Next.js)
-Buka terminal baru dan masuk ke folder *frontend*:
+---
+
+### 2. 🌐 Persiapan & Menjalankan Web Platform (Next.js)
+Buka tab terminal **kedua** (biarkan tab backend tetap menyala di background), lalu masuk ke folder frontend:
+
+**A. Instalasi Library**
 ```bash
+# Masuk ke folder frontend
 cd kecamapkita-frontend
+
+# Instal framework Next.js dan Tailwind CSS
+npm install
+```
+
+**B. Menjalankan Web Server**
+```bash
+# Jalankan web di mode development
 npm run dev
 ```
-- Akses web lokal melalui: `http://localhost:3000`
+- Buka peramban (browser) Anda dan akses: `http://localhost:3000`
 
-### 3. Menjalankan Aplikasi Mobile (React Native)
-Buka terminal baru dan masuk ke folder *mobile*:
+---
+
+### 3. 📱 Persiapan & Menjalankan Aplikasi Mobile (React Native / Expo)
+Buka tab terminal **ketiga**, lalu masuk ke folder mobile:
+
+**A. Instalasi Library**
 ```bash
+# Masuk ke folder mobile
 cd kecamapkita-mobile
-# Instalasi (jika belum)
+
+# Instal semua modul React Native dan Expo
 npm install
-# Jalankan server pengembangan Expo
+```
+
+**B. Menjalankan Server Expo**
+```bash
+# Pastikan Anda telah membuat file .env yang memuat EXPO_PUBLIC_GEMINI_API_KEY
+# Lalu jalankan server mobile:
 npx expo start
 ```
-- *Aplikasi siap diuji coba dengan melakukan pemindaian (Scan QR) menggunakan aplikasi **Expo Go** pada perangkat Android/iOS Anda.*
+- *QR Code* akan muncul di terminal Anda.
+- **Bagi Pengguna Android:** Unduh aplikasi **Expo Go** dari Google Play Store, lalu pindai *QR code* menggunakan fitur *Scan* di dalam aplikasi tersebut.
+- **Bagi Pengguna iOS:** Buka aplikasi **Kamera** bawaan iPhone, pindai *QR code*, lalu klik notifikasi peringatan yang muncul untuk membuka aplikasi Expo Go.
+- *Catatan penting: Pastikan Laptop dan Smartphone Anda terhubung pada jaringan WiFi yang sama agar aplikasi dapat termuat.*
 
 ---
 

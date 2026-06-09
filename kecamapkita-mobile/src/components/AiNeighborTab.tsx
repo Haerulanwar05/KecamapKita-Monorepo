@@ -50,7 +50,7 @@ export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#fafafa' }]}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 70} style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#fafafa' }]}>
       <View style={[styles.header, { backgroundColor: isDark ? '#18181b' : '#ffffff', borderBottomColor: isDark ? '#27272a' : '#f4f4f5' }]}>
         <View style={[styles.avatarBox, { backgroundColor: isDark ? '#064e3b' : '#e6f7ee' }]}>
             <Text style={styles.avatarEmoji}>👨🏽‍🦳</Text>
