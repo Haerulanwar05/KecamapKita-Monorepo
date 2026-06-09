@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+@layer base {
+  :root {
+    --premium-50: #f4fbf7;
+    --premium-100: #e6f7ee;
+    --premium-400: #34d399;
+    --premium-500: #0f9f59;
+    --premium-600: #0b8247;
+    --premium-700: #086637;
+    --premium-900: #03331b;
+  }
+}
+
+@layer utilities {
+  .font-sans {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  
+  .transition-premium {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  .dark .glass-effect {
+    background: rgba(9, 9, 11, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .weather-pulse {
+    animation: weather-glow 3s infinite alternate;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes weather-glow {
+  0% { box-shadow: 0 0 4px rgba(16, 185, 129, 0.1); }
+  100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e4e4e7;
+  border-radius: 10px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #27272a;
+}

@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KecamapKita - Eksplorasi Premium Kecamatan</title>
+    <!-- Tailwind CSS for high-end styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Plus Jakarta Sans for elite modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for refined minimalist icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        premium: {
+                            50: '#f4fbf7',
+                            100: '#e6f7ee',
+                            500: '#0f9f59',
+                            600: '#0b8247',
+                            700: '#086637',
+                            900: '#03331b',
+                        },
+                        zinc: {
+                            950: '#09090b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e4e4e7;
+            border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #27272a;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .transition-premium {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .dark .glass-effect {
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .weather-pulse {
+            animation: weather-glow 3s infinite alternate;
+        }
+        @keyframes weather-glow {
+            0% { box-shadow: 0 0 4px rgba(16, 185, 129, 0.1); }
+            100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
+        }
+    </style>
+</head>
+<body class="bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 font-sans min-h-screen flex items-center justify-center transition-colors duration-500 py-0 md:py-10">
+
+    <div class="relative w-full max-w-md bg-white dark:bg-zinc-900 md:rounded-[40px] md:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.08)] dark:md:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.5)] md:border md:border-zinc-100 dark:md:border-zinc-800/60 overflow-hidden min-h-screen md:min-h-[840px] flex flex-col pb-20 transition-premium">
+        
+        <!-- Canvas Emitter untuk Selebrasi Ledakan Confetti Level Up -->
+        <canvas id="confetti-canvas" class="pointer-events-none absolute inset-0 z-50 w-full h-full"></canvas>
+
+        <!-- Overly Selebrasi Naik Level RPG (Level Up) -->
+        <div id="level-up-overlay" class="absolute inset-0 bg-zinc-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-6 hidden opacity-0 transition-premium">
+            <div class="relative w-28 h-28 bg-gradient-to-tr from-premium-500 to-emerald-400 rounded-3xl flex items-center justify-center text-5xl shadow-2xl shadow-premium-500/20 mb-5 scale-75 transition-all duration-500" id="levelup-badge">
+                👑
+            </div>
+            <span class="text-[10px] font-bold text-premium-400 tracking-widest uppercase">Rank Baru Diperoleh!</span>
+            <h2 class="text-xl font-extrabold text-white tracking-tight mt-1" id="levelup-title">Penjelajah Lokal</h2>
+            <p id="levelup-desc" class="text-zinc-400 text-[11px] max-w-[240px] mt-2.5 leading-relaxed">Selamat! Penjelajahan hebatmu melahirkan status baru. Terus kunjungi rona kecamatan lainnya!</p>
+            <button onclick="closeLevelUpOverlay()" class="mt-8 px-6 py-3.5 bg-white text-zinc-900 rounded-2xl text-[11px] font-bold shadow-md hover:bg-zinc-100 transition-premium w-full max-w-[180px]">
+                Mantap, Lanjutkan!
+            </button>
+        </div>
+
+        <!-- ================= HEADER SECTION ================= -->
+        <header class="sticky top-0 z-30 glass-effect border-b border-zinc-100/80 dark:border-zinc-800/40 px-6 py-4 flex items-center justify-between transition-colors">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-gradient-to-tr from-premium-500 to-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-premium-500/10 dark:shadow-none">
+                    <i class="fa-solid fa-compass text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight leading-none">KecamapKita</h1>
+                    <span class="text-[9px] text-premium-600 dark:text-premium-400 font-semibold uppercase tracking-widest block mt-0.5">Rona Kecamatan</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-1.5 relative">
+                <!-- Advanced Weather Adaptive Toggle Pill -->
+                <button id="weather-toggle" onclick="toggleWeatherDropdown()" class="h-9 px-3 flex items-center space-x-2 rounded-xl bg-zinc-100/80 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 transition-premium border border-zinc-200/20 shadow-sm weather-pulse">
+                    <span id="weather-icon" class="text-xs">☀️</span>
+                    <span id="weather-quick-temp" class="text-[10px] font-bold">32°C</span>
+                </button>
+
+                <!-- Weather Dropdown Station Card -->
+                <div id="weather-dropdown" class="absolute right-0 top-11 w-64 bg-white/95 dark:bg-zinc-900/95 border border-zinc-100 dark:border-zinc-800/80 rounded-2xl shadow-xl z-50 hidden backdrop-blur-md p-4 transition-premium">
+                    <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/60 pb-2.5">
+                        <span class="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Metrik Cuaca Lokal</span>
+                        <span id="weather-station-kec" class="text-[9px] font-extrabold text-premium-600 dark:text-premium-400 uppercase tracking-widest">Menteng</span>
+                    </div>
+                    
+                    <!-- Dynamic Weather Indicators Grid -->
+                    <div class="grid grid-cols-2 gap-2 my-3">
+                        <div class="bg-zinc-50/50 dark:bg-zinc-950/30 p-2 rounded-xl border border-zinc-100 dark:border-zinc-800/20 text-center">
+                            <span class="text-[8px] text-zinc-400 dark:text-zinc-500 block uppercase font-semibold">Indeks UV</span>
+                            <span id="weather-val-uv" class="text-xs font-bold text-zinc-800 dark:text-zinc-200 block mt-0.5">Tinggi</span>
+                        </div>
+                        <div class="bg-zinc-50/50 dark:bg-zinc-950/30 p-2 rounded-xl border border-zinc-100 dark:border-zinc-800/20 text-center">
+                            <span class="text-[8px] text-zinc-400 dark:text-zinc-500 block uppercase font-semibold">Kelembapan</span>
+                            <span id="weather-val-hum" class="text-xs font-bold text-zinc-800 dark:text-zinc-200 block mt-0.5">75%</span>
+                        </div>
+                        <div class="bg-zinc-50/50 dark:bg-zinc-950/30 p-2 rounded-xl border border-zinc-100 dark:border-zinc-800/20 text-center">
+                            <span class="text-[8px] text-zinc-400 dark:text-zinc-500 block uppercase font-semibold">Kec. Angin</span>
+                            <span id="weather-val-wind" class="text-xs font-bold text-zinc-800 dark:text-zinc-200 block mt-0.5">12 km/h</span>
+                        </div>
+                        <div class="bg-zinc-50/50 dark:bg-zinc-950/30 p-2 rounded-xl border border-zinc-100 dark:border-zinc-800/20 text-center">
+                            <span class="text-[8px] text-zinc-400 dark:text-zinc-500 block uppercase font-semibold">Status</span>
+                            <span id="weather-val-desc" class="text-xs font-bold text-zinc-800 dark:text-zinc-200 block mt-0.5 truncate">Cerah Berawan</span>
+                        </div>
+                    </div>
+
+                    <!-- Weather Simulation Trigger Selector inside the Dropdown -->
+                    <div class="space-y-1.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/60">
+                        <span class="text-[8px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">Simulasikan Cuaca:</span>
+                        <div class="grid grid-cols-3 gap-1">
+                            <button onclick="setWeatherState('clear')" id="btn-sim-clear" class="py-1 px-1.5 rounded-lg text-[9px] font-bold bg-premium-500 text-white transition-premium">☀️ Cerah</button>
+                            <button onclick="setWeatherState('cloudy')" id="btn-sim-cloudy" class="py-1 px-1.5 rounded-lg text-[9px] font-bold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 text-zinc-600 dark:text-zinc-300 transition-premium">☁️ Mendung</button>
+                            <button onclick="setWeatherState('rain')" id="btn-sim-rain" class="py-1 px-1.5 rounded-lg text-[9px] font-bold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 text-zinc-600 dark:text-zinc-300 transition-premium">🌧️ Hujan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minimal Theme Toggle Button -->
+                <button id="theme-toggle" onclick="toggleTheme()" class="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-premium">
+                    <i id="theme-icon" class="fa-solid fa-moon text-base"></i>
+                </button>
+
+                <!-- Premium Account Avatar Toggle Button -->
+                <button id="profile-header-btn" onclick="openProfileOrAuth()" class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-premium border border-zinc-200/30 dark:border-zinc-800">
+                    <span id="header-avatar-emoji" class="text-sm">👤</span>
+                    <span id="header-online-indicator" class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-zinc-300 dark:bg-zinc-600 border-2 border-white dark:border-zinc-900 rounded-full transition-premium"></span>
+                </button>
+
+                <!-- Notification Badge -->
+                <button onclick="toggleTab('adventure')" class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-premium">
+                    <i class="fa-solid fa-medal text-lg text-amber-500 dark:text-amber-400"></i>
+                    <span id="level-indicator-badge" class="absolute -top-1 -right-1 bg-red-500 text-[8px] font-extrabold text-white rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-zinc-900 hidden">!</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-grow flex flex-col overflow-y-auto">
+            
+            <!-- ================= TAB EXPLORE ================= -->
+            <section id="tab-explore" class="app-tab flex flex-col flex-grow">
+                
+                <div class="px-6 py-5 space-y-4 bg-gradient-to-b from-zinc-50/50 to-transparent dark:from-zinc-950/20">
+                    
+                    <!-- GPS Geolocation Trigger pill -->
+                    <button onclick="detectGPSLocation()" class="w-full flex items-center justify-between py-3 px-4 bg-premium-50/70 hover:bg-premium-100/80 dark:bg-premium-900/10 dark:hover:bg-premium-900/20 border border-premium-100/50 dark:border-premium-900/30 text-premium-700 dark:text-premium-400 rounded-2xl text-xs font-semibold transition-premium">
+                        <span class="flex items-center space-x-2.5">
+                            <i class="fa-solid fa-location-arrow text-xs animate-pulse text-premium-500"></i>
+                            <span>Gunakan lokasi saat ini</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-[10px] opacity-65"></i>
+                    </button>
+                    
+                    <!-- Dynamic Search Input -->
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 text-xs">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" id="kecamatan-search" oninput="handleKecamatanSearch(this.value)" placeholder="Cari kecamatan (cth: Ubud, Menteng)..." class="w-full pl-11 pr-10 py-3.5 bg-zinc-100/75 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-0 dark:border-zinc-800/80 rounded-2xl text-xs text-zinc-800 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:bg-white focus:dark:bg-zinc-950 focus:ring-1 focus:ring-premium-500 transition-premium shadow-inner-sm" />
+                        <button onclick="clearSearch()" class="absolute inset-y-0 right-3 flex items-center px-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <!-- Suggestions Container -->
+                        <div id="search-suggestions" class="absolute left-0 right-0 top-full mt-2 bg-white/95 dark:bg-zinc-900/95 border border-zinc-100/80 dark:border-zinc-800/60 rounded-2xl shadow-xl z-20 hidden overflow-hidden backdrop-blur-md"></div>
+                    </div>
+
+                    <!-- Weather Info Adaptive Toast Banner inside Feed -->
+                    <div id="weather-banner" class="p-3.5 bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center space-x-3 transition-premium">
+                        <div class="text-lg" id="weather-banner-icon">☀️</div>
+                        <div class="flex-grow">
+                            <p class="text-[10px] font-extrabold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider" id="weather-banner-title">Cuaca Cerah Terdeteksi</p>
+                            <p class="text-[9px] text-zinc-500 dark:text-zinc-400 mt-0.5" id="weather-banner-text">Semua destinasi outdoor di sekitar Anda sangat disarankan untuk dikunjungi hari ini!</p>
+                        </div>
+                    </div>
+
+                    <!-- Active Sub-district Banner -->
+                    <div class="flex items-center space-x-2 text-[11px] text-zinc-400 dark:text-zinc-500 px-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-premium-500"></span>
+                        <span>Destinasi di <strong id="active-kecamatan-label" class="text-zinc-700 dark:text-zinc-300 font-bold">Kecamatan Menteng</strong></span>
+                    </div>
+                </div>
+
+                <div class="px-6 py-2">
+                    <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-3">
+                        <button onclick="filterByVibe('all')" class="vibe-tag shrink-0 px-4 py-2 rounded-full text-[11px] font-bold bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm transition-premium" data-vibe="all">
+                            ✨ Semua Vibe
+                        </button>
+                        <button onclick="filterByVibe('syahdu')" class="vibe-tag shrink-0 px-4 py-2 rounded-full text-[11px] font-bold bg-zinc-100/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-premium" data-vibe="syahdu">
+                            🍃 #Syahdu
+                        </button>
+                        <button onclick="filterByVibe('kenyang')" class="vibe-tag shrink-0 px-4 py-2 rounded-full text-[11px] font-bold bg-zinc-100/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-premium" data-vibe="kenyang">
+                            🍜 #Kenyang
+                        </button>
+                        <button onclick="filterByVibe('kreatif')" class="vibe-tag shrink-0 px-4 py-2 rounded-full text-[11px] font-bold bg-zinc-100/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-premium" data-vibe="kreatif">
+                            🎨 #Kreatif
+                        </button>
+                        <button onclick="filterByVibe('sejarah')" class="vibe-tag shrink-0 px-4 py-2 rounded-full text-[11px] font-bold bg-zinc-100/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-premium" data-vibe="sejarah">
+                            🏛️ #Sejarah
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feed Content Cards Area -->
+                <div id="spots-feed" class="p-6 pt-2 space-y-5 flex-grow overflow-y-auto font-sans"></div>
+            </section>
+
+            <!-- ================= TAB ADVENTURE (Rank & Jejak RPG Panel) ================= -->
+            <section id="tab-adventure" class="app-tab hidden flex-col flex-grow p-6 space-y-6">
+                <!-- Gamified Rank & Profile Status Dashboard -->
+                <div class="relative overflow-hidden p-6 bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900 border border-zinc-800 dark:border-zinc-800/80 rounded-3xl text-white shadow-xl">
+                    <div class="absolute -right-8 -bottom-8 opacity-10 text-9xl">
+                        <i class="fa-solid fa-gamepad"></i>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-premium-400">Peringkat Eksplorasi</span>
+                        <div class="flex items-center space-x-1 bg-premium-900/40 border border-premium-500/30 px-2 py-0.5 rounded-md text-[9px]">
+                            <span id="adventure-online-dot" class="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse"></span>
+                            <span class="font-bold text-zinc-400" id="adventure-online-status">LOKAL (LURING)</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Level and Icon -->
+                    <div class="flex items-center space-x-4 mt-3">
+                        <div class="w-14 h-14 bg-zinc-800 rounded-2xl border border-zinc-700 flex items-center justify-center text-3xl shadow-inner relative" id="rank-emoji-container">
+                            🚶🏽‍♂️
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-extrabold tracking-tight leading-none" id="rank-title">Penjelajah Santai</h2>
+                            <p class="text-[10px] text-zinc-400 mt-1" id="rank-level-label">Level 2</p>
+                        </div>
+                    </div>
+
+                    <!-- XP Progression Bar -->
+                    <div class="mt-5 space-y-1.5">
+                        <div class="flex items-center justify-between text-[10px] text-zinc-400 font-medium">
+                            <span id="xp-progress-label">XP: 300 / 450</span>
+                            <span id="xp-percentage-label">66%</span>
+                        </div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden shadow-inner">
+                            <div id="xp-bar" class="h-full bg-gradient-to-r from-premium-500 to-emerald-400 rounded-full transition-premium shadow-[0_0_8px_#0f9f59]" style="width: 66%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Adventure Quick Stats Grid -->
+                    <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-zinc-800/80 text-center">
+                        <div>
+                            <span class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider">Kunjungan</span>
+                            <p class="text-xs font-bold mt-0.5 text-zinc-100" id="stat-total-visits">2</p>
+                        </div>
+                        <div class="border-x border-zinc-800/80">
+                            <span class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider">Distrik</span>
+                            <p class="text-xs font-bold mt-0.5 text-zinc-100" id="stat-unique-districts">2</p>
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider">Total XP</span>
+                            <p class="text-xs font-bold mt-0.5 text-premium-400" id="stat-total-xp">300</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Sync Prompt for Anonymous/Guest users -->
+                <div id="sync-promo-banner" class="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-between transition-premium">
+                    <div class="space-y-0.5">
+                        <p class="text-[10px] font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wide">Amankan Perjalananmu!</p>
+                        <p class="text-[9px] text-zinc-500 dark:text-zinc-400 max-w-[210px] leading-relaxed">Anda bermain sebagai Tamu. Buat akun gratis untuk mengunci XP & lencana Anda di awan.</p>
+                    </div>
+                    <button onclick="openAuthModal('signup')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[9px] font-extrabold shadow-sm transition-premium">Daftar</button>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Tempat yang Dikunjungi</h3>
+                        
+                        <!-- Mini Time Filter Pills -->
+                        <div class="flex items-center space-x-1 bg-zinc-100 dark:bg-zinc-800/80 p-0.5 rounded-xl border border-zinc-200/20">
+                            <button onclick="filterTime('all')" class="time-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-bold bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white transition-premium" data-time="all">Semua</button>
+                            <button onclick="filterTime('week')" class="time-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 transition-premium" data-time="week">Minggu ini</button>
+                            <button onclick="filterTime('month')" class="time-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 transition-premium" data-time="month">Bulan ini</button>
+                        </div>
+                    </div>
+
+                    <!-- Chronological Visited List -->
+                    <div id="visited-timeline-list" class="space-y-3"></div>
+                </div>
+
+                <!-- Achievements Shelves -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider px-1">Lencana Pencapaian</h3>
+                    <div id="achievement-grid" class="grid grid-cols-2 gap-3 font-sans"></div>
+                </div>
+            </section>
+
+            <!-- ================= TAB AI NEIGHBOR ================= -->
+            <section id="tab-ai-neighbor" class="app-tab hidden flex-col flex-grow">
+                <div class="p-4 px-6 bg-zinc-50/50 dark:bg-zinc-950/20 border-b border-zinc-100 dark:border-zinc-800/40 flex items-center space-x-3.5 transition-colors">
+                    <div class="relative">
+                        <div class="w-11 h-11 bg-premium-100 dark:bg-premium-900/30 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                            👨🏽‍🦳
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-premium-500 border-2 border-white dark:border-zinc-900 rounded-full animate-pulse"></span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xs text-zinc-900 dark:text-zinc-100 leading-tight">Pak RT "KecamapKita"</h3>
+                        <p class="text-[10px] text-premium-600 dark:text-premium-400 font-semibold tracking-wide mt-0.5">Asisten AI Tetangga Anda • Online</p>
+                    </div>
+                </div>
+
+                <!-- Chat Dialog Window -->
+                <div id="chat-messages" class="flex-grow p-6 overflow-y-auto space-y-4 bg-zinc-50/20 dark:bg-zinc-950/5 min-h-[350px]">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-sm shrink-0">👨🏽‍🦳</div>
+                        <div class="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-3.5 rounded-2xl rounded-tl-none shadow-sm max-w-[80%] text-[12px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                            Halo tetangga! Saya **Pak RT**, asisten AI lokalmu. Mau cari seblak tersembunyi yang pedas mantap atau tempat melamun asri di kecamatan sekitar? Tanyain aja langsung di bawah ya!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Inputs -->
+                <div class="p-4 px-6 border-t border-zinc-100 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 flex items-center space-x-2 transition-colors">
+                    <input type="text" id="chat-input" placeholder="Tanya tentang spot melamun di Menteng..." class="flex-grow px-4 py-3 bg-zinc-100/70 dark:bg-zinc-800/50 rounded-2xl text-xs text-zinc-800 dark:text-white placeholder-zinc-400 focus:outline-none focus:bg-white focus:dark:bg-zinc-950 focus:ring-1 focus:ring-premium-500 transition-premium" onkeypress="if(event.key === 'Enter') sendChatMessage()" />
+                    <button onclick="sendChatMessage()" class="w-10 h-10 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl flex items-center justify-center transition-premium shadow-md shadow-zinc-900/10 dark:shadow-none">
+                        <i class="fa-solid fa-arrow-up text-xs"></i>
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Dynamic Toaster Notification System -->
+        <div id="toast-notification" class="absolute bottom-20 left-6 right-6 bg-zinc-900/95 dark:bg-zinc-50/95 text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 px-4 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3 transition-premium transform translate-y-20 opacity-0 pointer-events-none z-50 backdrop-blur-md">
+            <div id="toast-icon" class="text-premium-400 text-sm">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="flex-grow">
+                <p id="toast-message" class="text-[11px] font-semibold leading-relaxed"></p>
+            </div>
+            <button onclick="hideToast()" class="text-zinc-400 dark:text-zinc-500 hover:text-white dark:hover:text-zinc-900 transition-colors">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Bottom Tab Nav -->
+        <nav class="bg-white/90 dark:bg-zinc-900/90 border-t border-zinc-100 dark:border-zinc-800/40 absolute bottom-0 left-0 right-0 z-40 transition-colors backdrop-blur-md">
+            <div class="flex justify-around items-center py-3">
+                <button onclick="toggleTab('explore')" id="nav-explore" class="flex flex-col items-center space-y-1 text-premium-600 dark:text-premium-400 font-bold transition-premium">
+                    <i class="fa-solid fa-compass text-base"></i>
+                    <span class="text-[9px] tracking-wide mt-0.5">Eksplorasi</span>
+                </button>
+                <button onclick="toggleTab('adventure')" id="nav-adventure" class="flex flex-col items-center space-y-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-premium">
+                    <i class="fa-solid fa-award text-base"></i>
+                    <span class="text-[9px] tracking-wide mt-0.5">Petualangan</span>
+                </button>
+                <button onclick="toggleTab('ai-neighbor')" id="nav-ai-neighbor" class="flex flex-col items-center space-y-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-premium">
+                    <i class="fa-solid fa-comment-dots text-base"></i>
+                    <span class="text-[9px] tracking-wide mt-0.5">Tanya Tetangga</span>
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- ================= MODAL SPOT DETAIL ================= -->
+    <div id="spot-modal" class="fixed inset-0 bg-zinc-950/40 dark:bg-zinc-950/70 backdrop-blur-md z-50 flex items-end justify-center hidden opacity-0 transition-premium">
+        <div class="bg-white dark:bg-zinc-900 w-full max-w-md rounded-t-[32px] shadow-2xl max-h-[92vh] overflow-y-auto transform translate-y-full transition-premium flex flex-col border-t border-zinc-100 dark:border-zinc-800">
+            
+            <!-- Modal Pull bar indicator -->
+            <div class="w-12 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full mx-auto my-3 shrink-0"></div>
+
+            <!-- Modal Header Hero Photo Banner -->
+            <div class="relative h-60 bg-zinc-100 dark:bg-zinc-800 shrink-0 overflow-hidden mx-4 rounded-2xl">
+                <img id="modal-img" src="" alt="Spot Hero Image" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-900/90 via-zinc-900/30 to-transparent"></div>
+                <button onclick="closeSpotModal()" class="absolute top-4 right-4 w-9 h-9 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm hover:scale-95 text-zinc-800 dark:text-white rounded-xl flex items-center justify-center shadow-lg transition-premium">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+                <div class="absolute bottom-5 left-5 right-5 text-white">
+                    <span id="modal-kecamatan-badge" class="px-2.5 py-1 bg-premium-500 text-[9px] font-bold rounded-lg uppercase tracking-wider inline-block">Kecamatan</span>
+                    <h2 id="modal-title" class="text-lg font-bold mt-2 tracking-tight font-sans">Nama Tempat Wisata</h2>
+                </div>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-6 space-y-5 flex-grow">
+                
+                <!-- Ratings & Vibes -->
+                <div class="flex items-center justify-between">
+                    <div id="modal-vibe-badge" class="flex items-center space-x-1.5"></div>
+                    <div class="flex items-center space-x-1.5 bg-zinc-50 dark:bg-zinc-800/40 px-2.5 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800/80">
+                        <i class="fa-solid fa-star text-amber-400 text-xs"></i>
+                        <span id="modal-rating" class="text-[11px] font-bold text-zinc-800 dark:text-zinc-200">4.8</span>
+                    </div>
+                </div>
+
+                <!-- Beautiful Description -->
+                <div class="space-y-1.5">
+                    <h4 class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Sekilas Destinasi</h4>
+                    <p id="modal-description" class="text-[12px] text-zinc-600 dark:text-zinc-400 leading-relaxed"></p>
+                </div>
+
+                <!-- Crowdedness Meter (Jam Paling Syahdu) Section -->
+                <div class="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl space-y-3 border border-zinc-100 dark:border-zinc-800/50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-1.5 text-zinc-700 dark:text-zinc-300">
+                            <i class="fa-regular fa-clock text-xs text-premium-500"></i>
+                            <h4 class="text-[10px] font-bold uppercase tracking-widest">Waktu Kunjungan Terbaik</h4>
+                        </div>
+                        <span id="modal-best-time-label" class="text-[9px] font-extrabold text-premium-600 dark:text-premium-400 px-2 py-0.5 bg-premium-100/50 dark:bg-premium-900/20 rounded-md uppercase">Pagi Hari (Syahdu)</span>
+                    </div>
+                    <!-- Relative Hourly Chart -->
+                    <div class="grid grid-cols-4 gap-3 items-end h-16 pt-3 px-1">
+                        <div class="flex flex-col items-center space-y-1">
+                            <div id="crowd-bar-pagi" class="w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-lg transition-all duration-700" style="height: 20%;"></div>
+                            <span class="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold uppercase">Pagi</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div id="crowd-bar-siang" class="w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-lg transition-all duration-700" style="height: 20%;"></div>
+                            <span class="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold uppercase">Siang</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div id="crowd-bar-sore" class="w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-lg transition-all duration-700" style="height: 20%;"></div>
+                            <span class="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold uppercase">Sore</span>
+                        </div>
+                        <div class="flex flex-col items-center space-y-1">
+                            <div id="crowd-bar-malam" class="w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-lg transition-all duration-700" style="height: 20%;"></div>
+                            <span class="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold uppercase">Malam</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- "Kata Tetangga" Minimalist Advice card -->
+                <div class="bg-premium-50/40 dark:bg-premium-950/10 border border-premium-100/50 dark:border-premium-900/30 rounded-2xl p-4 space-y-2">
+                    <div class="flex items-center space-x-2 text-premium-700 dark:text-premium-400">
+                        <span class="text-sm">👨🏽‍🦳</span>
+                        <h4 class="text-[10px] font-bold uppercase tracking-widest">Petuah Tetangga (AI Advice)</h4>
+                    </div>
+                    <p id="modal-ai-advice" class="text-[11px] text-zinc-600 dark:text-zinc-400 italic leading-relaxed"></p>
+                </div>
+
+                <!-- Grid Details Stats -->
+                <div class="grid grid-cols-3 gap-3 bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl">
+                    <div class="text-center">
+                        <span class="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Tiket</span>
+                        <p id="modal-price" class="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 mt-1"></p>
+                    </div>
+                    <div class="text-center border-x border-zinc-200/50 dark:border-zinc-800/50">
+                        <span class="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Jam Buka</span>
+                        <p id="modal-hours" class="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 mt-1"></p>
+                    </div>
+                    <div class="text-center">
+                        <span class="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Estimasi</span>
+                        <p id="modal-distance" class="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 mt-1"></p>
+                    </div>
+                </div>
+
+                <!-- Facilities -->
+                <div class="space-y-2">
+                    <h4 class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 tracking-wider uppercase">Fasilitas Penunjang</h4>
+                    <div id="modal-facilities" class="flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <!-- Double Action Button Container -->
+                <div class="flex space-x-2.5 w-full mt-2">
+                    <button id="modal-route-btn" onclick="openNavigation()" class="flex-1 flex items-center justify-center space-x-2 py-3.5 bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 text-zinc-800 dark:text-zinc-200 rounded-2xl font-bold text-xs transition-premium border border-zinc-200/10 dark:border-zinc-700/40">
+                        <i class="fa-solid fa-diamond-turn-right text-premium-500 text-sm"></i>
+                        <span>Rute</span>
+                    </button>
+                    <button id="modal-checkin-btn" onclick="triggerCheckIn()" class="flex-[2.2] flex items-center justify-center space-x-2 py-3.5 bg-premium-500 hover:bg-premium-600 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-bold text-xs shadow-lg shadow-premium-500/10 dark:shadow-none transition-premium">
+                        <i class="fa-solid fa-location-crosshairs animate-pulse"></i>
+                        <span>Tandai Kunjungan (+150 XP)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL PROFILE & AUTH (LOGIN / REGISTER) ================= -->
+    <div id="auth-modal" class="fixed inset-0 bg-zinc-950/40 dark:bg-zinc-950/70 backdrop-blur-md z-50 flex items-center justify-center hidden opacity-0 transition-premium p-6">
+        <div class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden transform scale-95 transition-premium border border-zinc-100 dark:border-zinc-800/80 p-6 space-y-5 flex flex-col relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 w-8 h-8 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300 rounded-xl flex items-center justify-center transition-premium">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+
+            <!-- Auth Form UI Header -->
+            <div class="text-center pt-2">
+                <span class="w-10 h-10 bg-premium-100 dark:bg-premium-900/30 text-premium-600 dark:text-premium-400 rounded-xl flex items-center justify-center text-sm mx-auto mb-2.5">
+                    <i class="fa-solid fa-user-shield"></i>
+                </span>
+                <h3 id="auth-title" class="font-extrabold text-base text-zinc-900 dark:text-white tracking-tight leading-none">Akses Akun Petualang</h3>
+                <p id="auth-subtitle" class="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 leading-relaxed">Kelola progres, lencana, dan riwayat rute kecamatannmu!</p>
+            </div>
+
+            <!-- Login / Signup Slide Toggle -->
+            <div class="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl">
+                <button id="auth-tab-signin" onclick="switchAuthTab('signin')" class="py-2 rounded-lg text-[10px] font-bold bg-white text-zinc-900 dark:bg-zinc-700 dark:text-white transition-premium shadow-sm">Masuk</button>
+                <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="py-2 rounded-lg text-[10px] font-bold text-zinc-500 dark:text-zinc-400 transition-premium">Daftar Baru</button>
+            </div>
+
+            <!-- Auth Input Fields form -->
+            <div class="space-y-3">
+                <div class="space-y-1">
+                    <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block pl-1">Username / E-mail</label>
+                    <input type="text" id="auth-email-input" placeholder="contoh: kelana_sejati" class="w-full px-4 py-3 bg-zinc-100/70 dark:bg-zinc-800/40 rounded-xl text-xs text-zinc-800 dark:text-white focus:outline-none focus:bg-white focus:dark:bg-zinc-950 focus:ring-1 focus:ring-premium-500 transition-premium" />
+                </div>
+                <div id="displayname-form-group" class="space-y-1 hidden">
+                    <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block pl-1">Nama Tampilan</label>
+                    <input type="text" id="auth-display-input" placeholder="Nama Anda (cth: Sang Pengelana)" class="w-full px-4 py-3 bg-zinc-100/70 dark:bg-zinc-800/40 rounded-xl text-xs text-zinc-800 dark:text-white focus:outline-none focus:bg-white focus:dark:bg-zinc-950 focus:ring-1 focus:ring-premium-500 transition-premium" />
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block pl-1">Kata Sandi</label>
+                    <input type="password" id="auth-pass-input" placeholder="••••••••" class="w-full px-4 py-3 bg-zinc-100/70 dark:bg-zinc-800/40 rounded-xl text-xs text-zinc-800 dark:text-white focus:outline-none focus:bg-white focus:dark:bg-zinc-950 focus:ring-1 focus:ring-premium-500 transition-premium" />
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <button onclick="handleAuthSubmit()" class="w-full py-3.5 bg-premium-500 hover:bg-premium-600 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-bold text-xs shadow-lg shadow-premium-500/10 dark:shadow-none transition-premium">
+                    <span id="auth-submit-text">Verifikasi Masuk</span>
+                </button>
+                <div class="text-center pt-1.5 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
+                    <span class="text-[8px] text-zinc-400 uppercase font-semibold">Butuh Akun Demo?</span>
+                    <button onclick="fillDemoCredentials()" class="text-[9px] font-bold text-premium-600 dark:text-premium-400 hover:underline">Pakai Akun Kelana</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL USER PROFILE SETTINGS ================= -->
+    <div id="profile-settings-modal" class="fixed inset-0 bg-zinc-950/40 dark:bg-zinc-950/70 backdrop-blur-md z-50 flex items-center justify-center hidden opacity-0 transition-premium p-6">
+        <div class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden transform scale-95 transition-premium border border-zinc-100 dark:border-zinc-800/80 p-6 space-y-5 flex flex-col relative">
+            <button onclick="closeProfileModal()" class="absolute top-4 right-4 w-8 h-8 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300 rounded-xl flex items-center justify-center transition-premium">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+
+            <!-- Profile Overview Header -->
+            <div class="text-center pt-2 space-y-1.5">
+                <div class="relative w-16 h-16 bg-zinc-100 dark:bg-zinc-800 border-2 border-premium-500/40 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-inner" id="profile-modal-avatar">
+                    🤠
+                </div>
+                <div>
+                    <h3 id="profile-modal-displayname" class="font-extrabold text-base text-zinc-900 dark:text-white tracking-tight leading-none">Sang Kelana</h3>
+                    <p id="profile-modal-username" class="text-[9px] text-zinc-400 dark:text-zinc-500 uppercase font-semibold tracking-wider mt-1">@kelana_sejati</p>
+                </div>
+            </div>
+
+            <!-- Avatar Customize Carousel Selection -->
+            <div class="space-y-1.5">
+                <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block text-center">Ubah Avatar Petualang</label>
+                <div class="flex justify-center space-x-2 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                    <button onclick="selectProfileAvatar('🤠')" class="avatar-select-pill text-lg p-1.5 rounded-xl transition-premium hover:bg-zinc-100 dark:hover:bg-zinc-800">🤠</button>
+                    <button onclick="selectProfileAvatar('🕵🏽‍♂️')" class="avatar-select-pill text-lg p-1.5 rounded-xl transition-premium hover:bg-zinc-100 dark:hover:bg-zinc-800">🕵🏽‍♂️</button>
+                    <button onclick="selectProfileAvatar('👩🏽‍🚀')" class="avatar-select-pill text-lg p-1.5 rounded-xl transition-premium hover:bg-zinc-100 dark:hover:bg-zinc-800">👩🏽‍🚀</button>
+                    <button onclick="selectProfileAvatar('🧙🏼‍♂️')" class="avatar-select-pill text-lg p-1.5 rounded-xl transition-premium hover:bg-zinc-100 dark:hover:bg-zinc-800">🧙🏼‍♂️</button>
+                    <button onclick="selectProfileAvatar('🚴🏼‍♀️')" class="avatar-select-pill text-lg p-1.5 rounded-xl transition-premium hover:bg-zinc-100 dark:hover:bg-zinc-800">🚴🏼‍♀️</button>
+                    <button onclick="selectProfileAvatar('🎨')" class="avatar-select-pill text-lg p-1.5 rounded-xl transition-premium hover:bg-zinc-100 dark:hover:bg-zinc-800">🎨</button>
+                </div>
+            </div>
+
+            <!-- Input Edit Display Name -->
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block pl-1">Edit Nama Tampilan</label>
+                <input type="text" id="profile-modal-edit-name" class="w-full px-4 py-3.5 bg-zinc-100/70 dark:bg-zinc-800/40 rounded-xl text-xs text-zinc-800 dark:text-white focus:outline-none focus:bg-white focus:dark:bg-zinc-950 focus:ring-1 focus:ring-premium-500 transition-premium" />
+            </div>
+
+            <!-- Save & Signout buttons -->
+            <div class="space-y-2 pt-2">
+                <button onclick="saveProfileChanges()" class="w-full py-3 bg-premium-500 hover:bg-premium-600 text-white rounded-2xl font-bold text-xs shadow-md transition-premium">
+                    Simpan Perubahan
+                </button>
+                <button onclick="handleSignOut()" class="w-full py-3 border border-red-500/30 hover:bg-red-500/5 text-red-500 rounded-2xl font-bold text-xs transition-premium">
+                    Keluar dari Akun (Keluar)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= LOGIC AND JAVASCRIPT STATE SYSTEM ================= -->
+    <script>
+        const mockKecamatan = ["Menteng", "Jatinangor", "Ubud", "Cilandak"];
+
+        const kecamatanWeatherData = {
+            "Menteng": { temp: 32, uv: "Tinggi", humidity: "72%", desc: "Cerah Berawan", wind: "12 km/h" },
+            "Jatinangor": { temp: 21, uv: "Sedang", humidity: "85%", desc: "Sejuk & Berkabut", wind: "8 km/h" },
+            "Ubud": { temp: 26, uv: "Sangat Tinggi", humidity: "88%", desc: "Hujan Tropis Basah", wind: "6 km/h" },
+            "Cilandak": { temp: 30, uv: "Tinggi", humidity: "65%", desc: "Cerah Rindang", wind: "10 km/h" }
+        };
+        
+        const mockSpots = [
+            {
+                id: 1,
+                name: "Taman Suropati",
+                kecamatan: "Menteng",
+                vibe: "syahdu",
+                type: "outdoor",
+                lat: -6.1993,
+                lng: 106.8326,
+                description: "Taman hijau nan rimbun di jantung kawasan elite Menteng. Tempat bertemunya seniman musik, pencinta alam, dan warga kota yang mendambakan keheningan sejenak dari hiruk-pikuk Jakarta.",
+                image: "https://images.unsplash.com/photo-1596306499317-8490232098fa?auto=format&fit=crop&w=800&q=80",
+                rating: 4.8,
+                distance: "0.8 km",
+                price: "Gratis",
+                hours: "05.00 - 22.00",
+                facilities: ["Taman Rindang", "Wi-Fi Area", "Bangku Taman", "Akses Difabel"],
+                aiAdvice: "Kalo ke sini enakan sore jam 4-an, biasanya ada anak sekolah seni latihan biola gratis di sudut barat taman. Jangan lupa beli wedang ronde di samping pagar luar, rasanya mantep!",
+                crowdedness: { pagi: 15, siang: 35, sore: 90, malam: 45 },
+                bestTime: "Pagi (Teduh & Sepi)"
+            },
+            {
+                id: 2,
+                name: "Nasi Uduk Gondangdia",
+                kecamatan: "Menteng",
+                vibe: "kenyang",
+                type: "indoor",
+                lat: -6.1878,
+                lng: 106.8329,
+                description: "Nasi uduk legendaris bernuansa khas Betawi asli sejak tahun 1993. Terkenal dengan bungkus daun pisangnya yang berbentuk kerucut unik serta sambal kacangnya yang gurih merem melek.",
+                image: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&w=800&q=80",
+                rating: 4.6,
+                distance: "1.2 km",
+                price: "Rp 15k - 40k",
+                hours: "09.00 - 21.00",
+                facilities: ["Parkiran Luas", "Area Ber-AC", "Mushola", "Cashless"],
+                aiAdvice: "Pesannya yang komplit ya! Usus goreng garing plus sambal petir rahasianya itu rahasia kesukaan warga RT saya. Kalo malam Minggu antre parah, jadi mending mampir jam 5 sore.",
+                crowdedness: { pagi: 10, siang: 85, sore: 40, malam: 95 },
+                bestTime: "Sore Hari (Sepi Antrean)"
+            },
+            {
+                id: 3,
+                name: "Jatinangor House Co-Working",
+                kecamatan: "Jatinangor",
+                vibe: "kreatif",
+                type: "indoor",
+                lat: -6.9272,
+                lng: 107.7725,
+                description: "Kafe estetik dengan nuansa modern yang digandrungi mahasiswa lokal untuk nugas, belajar, ataupun berkolaborasi menciptakan ide-ide startup baru di Sumedang.",
+                image: "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=800&q=80",
+                rating: 4.7,
+                distance: "2.5 km",
+                price: "Rp 20k - 50k",
+                hours: "08.00 - 23.00",
+                facilities: ["Banyak Colokan", "Wi-Fi Kencang", "Indoor AC", "Ruang Rapat"],
+                aiAdvice: "Kopi susu creamy di sini juara dunia, harganya bersahabat buat dompet mahasiswa. Pojokan lantai 2 itu spot favorit karena deket jendela langsung menghadap perbukitan.",
+                crowdedness: { pagi: 30, siang: 90, sore: 80, malam: 65 },
+                bestTime: "Pagi Hari (Wi-Fi Lancar)"
+            },
+            {
+                id: 4,
+                name: "Hutan Pinus Batu Kuda",
+                kecamatan: "Jatinangor",
+                vibe: "syahdu",
+                type: "outdoor",
+                lat: -6.8979,
+                lng: 107.7414,
+                description: "Destinasi wisata alam asri di kaki Gunung Manglayang. Pemandangan barisan pohon pinus yang menjulang tinggi menawarkan ketenangan hakiki bagi jiwa-jiwa penat.",
+                image: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80",
+                rating: 4.9,
+                distance: "4.1 km",
+                price: "Rp 15.000",
+                hours: "06.00 - 18.00",
+                facilities: ["Camping Ground", "Hammock", "Warung Lokal", "Toilet Bersih"],
+                aiAdvice: "Kalo mau dapet kabut mistis estetik kayak di film-film, wajib berangkat jam 6 pagi sesudah subuh. Bawa jaket tebal karena angin pegunungannya bikin menggigil banget, Kang!",
+                crowdedness: { pagi: 40, siang: 75, sore: 55, malam: 5 },
+                bestTime: "Pagi Hari (Kabut Estetik)"
+            },
+            {
+                id: 5,
+                name: "Seniman Coffee Ubud",
+                kecamatan: "Ubud",
+                vibe: "kreatif",
+                type: "indoor",
+                lat: -8.5042,
+                lng: 115.2625,
+                description: "Pionir kopi gelombang ketiga di jantung Ubud. Menyajikan kopi berkualitas tinggi berpadu dengan furnitur rancangan daur ulang yang memicu kreativitas seni tingkat tinggi.",
+                image: "https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=800&q=80",
+                rating: 4.9,
+                distance: "0.5 km",
+                price: "Rp 35k - 75k",
+                hours: "07.30 - 22.00",
+                facilities: ["Art Gallery", "Specialty Coffee", "Outdoor", "Barista Bar"],
+                aiAdvice: "Sangat direkomendasikan pesan Cold Brew sambil ngobrol sama turis atau seniman lokal yang sering nongkrong di bar tengah. Tempatnya inspiratif banget buat nulis atau ngelukis.",
+                crowdedness: { pagi: 50, siang: 70, sore: 85, malam: 60 },
+                bestTime: "Pagi Hari (Inspiratif & Tenang)"
+            },
+            {
+                id: 6,
+                name: "Teras Sawah Tegalalang",
+                kecamatan: "Ubud",
+                vibe: "syahdu",
+                type: "outdoor",
+                lat: -8.4312,
+                lng: 115.2797,
+                description: "Pemandangan sawah terasering berundak-undak hijau ikonik yang mengagumkan. Melambangkan kearifan lokal sistem pengairan tradisional Subak Bali yang mendunia.",
+                image: "https://images.unsplash.com/photo-1558230315-5927395092cf?auto=format&fit=crop&w=800&q=80",
+                rating: 4.8,
+                distance: "5.0 km",
+                price: "Rp 25.000",
+                hours: "08.00 - 18.00",
+                facilities: ["Tracking Path", "Spot Foto", "Resto Sawah", "Local Guide"],
+                aiAdvice: "Jangan cuma foto dari pinggir jalan raya utama. Coba jalan turun melintasi petak sawah ke sisi seberang, ketenangannya beda jauh dan suasananya jauh lebih magis.",
+                crowdedness: { pagi: 25, siang: 95, sore: 60, malam: 5 },
+                bestTime: "Pagi Hari (Teduh & Adem)"
+            }
+        ];
+
+        /* SYSTEM RANK DEFINITIONS */
+        const rankSystem = [
+            { minXp: 0, maxXp: 149, title: "Pendatang Baru", level: 1, emoji: "🥚" },
+            { minXp: 150, maxXp: 299, title: "Langkah Pertama", level: 2, emoji: "🐣" },
+            { minXp: 300, maxXp: 599, title: "Penjelajah Santai", level: 3, emoji: "🚶🏽‍♂️" },
+            { minXp: 600, maxXp: 1199, title: "Pencari Harmoni", level: 4, emoji: "🎯" },
+            { minXp: 1200, maxXp: Infinity, title: "Kecamap Overlord", level: 5, emoji: "👑" }
+        ];
+
+        /* ================= AUTHENTICATION & USERS SEED ================= */
+        // Simulated User Database in LocalStorage
+        let usersDB = JSON.parse(localStorage.getItem('kecamapkita_users_db')) || [
+            { username: "kelana", email: "kelana@gmail.com", password: "password123", displayName: "Sang Kelana", avatar: "🤠", history: [
+                { spotId: 1, visitedAt: new Date(Date.now() - (5 * 24 * 60 * 60 * 1000)).toISOString() }, 
+                { spotId: 2, visitedAt: new Date(Date.now() - (40 * 24 * 60 * 60 * 1000)).toISOString() }
+            ]}
+        ];
+        localStorage.setItem('kecamapkita_users_db', JSON.stringify(usersDB));
+
+        // Active state of current session
+        let currentUser = JSON.parse(localStorage.getItem('kecamapkita_current_user')) || null;
+        let guestHistory = JSON.parse(localStorage.getItem('kecamapkita_guest_history')) || [];
+
+        /* APP VIEW STATE */
+        let activeKecamatan = "Menteng"; 
+        let activeVibe = "all";
+        let activeTab = "explore";
+        let activeTimeFilter = "all";
+        let currentSelectedSpot = null;
+        let activeWeather = "clear"; // "clear" (☀️), "cloudy" (☁️), atau "rain" (🌧️)
+        let activeAuthTab = "signin";
+
+        window.onload = function() {
+            updateThemeToggleIcon(document.documentElement.classList.contains('dark'));
+            updateWeatherWidgetUI();
+            updateSpotsFeed();
+            updateUserStatusUI();
+            updateAdventureTabUI();
+            
+            document.getElementById('spot-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeSpotModal();
+            });
+
+            document.getElementById('auth-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeAuthModal();
+            });
+
+            document.getElementById('profile-settings-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeProfileModal();
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                const weatherDropdown = document.getElementById('weather-dropdown');
+                const weatherToggle = document.getElementById('weather-toggle');
+                if (weatherDropdown && !weatherDropdown.contains(e.target) && !weatherToggle.contains(e.target)) {
+                    weatherDropdown.classList.add('hidden');
+                }
+            });
+        };
+
+        /* ================= AUTHENTICATION LOGIC METHODS ================= */
+        function openProfileOrAuth() {
+            if (currentUser) {
+                // Open Profile Settings Modal
+                document.getElementById('profile-modal-displayname').textContent = currentUser.displayName;
+                document.getElementById('profile-modal-username').textContent = `@${currentUser.username}`;
+                document.getElementById('profile-modal-avatar').textContent = currentUser.avatar || "🤠";
+                document.getElementById('profile-modal-edit-name').value = currentUser.displayName;
+                
+                // Highlight selected avatar
+                document.querySelectorAll('.avatar-select-pill').forEach(btn => {
+                    if (btn.textContent === currentUser.avatar) {
+                        btn.className = "avatar-select-pill text-lg p-1.5 rounded-xl transition-premium bg-premium-100 dark:bg-premium-900 border border-premium-500/30";
+                    } else {
+                        btn.className = "avatar-select-pill text-lg p-1.5 rounded-xl transition-premium hover:bg-zinc-100 dark:hover:bg-zinc-800";
+                    }
+                });
+
+                const modal = document.getElementById('profile-settings-modal');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.add('opacity-100');
+                    modal.querySelector('.transform').classList.remove('scale-95');
+                }, 10);
+            } else {
+                openAuthModal('signin');
+            }
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profile-settings-modal');
+            modal.querySelector('.transform').classList.add('scale-95');
+            modal.classList.remove('opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 400);
+        }
+
+        function openAuthModal(tab = 'signin') {
+            switchAuthTab(tab);
+            const modal = document.getElementById('auth-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                modal.querySelector('.transform').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            modal.querySelector('.transform').classList.add('scale-95');
+            modal.classList.remove('opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 400);
+        }
+
+        function switchAuthTab(tab) {
+            activeAuthTab = tab;
+            const tabSignin = document.getElementById('auth-tab-signin');
+            const tabSignup = document.getElementById('auth-tab-signup');
+            const displayGroup = document.getElementById('displayname-form-group');
+            const title = document.getElementById('auth-title');
+            const sub = document.getElementById('auth-subtitle');
+            const submitBtn = document.getElementById('auth-submit-text');
+
+            if (tab === 'signin') {
+                tabSignin.className = "py-2 rounded-lg text-[10px] font-bold bg-white text-zinc-900 dark:bg-zinc-700 dark:text-white transition-premium shadow-sm";
+                tabSignup.className = "py-2 rounded-lg text-[10px] font-bold text-zinc-500 dark:text-zinc-400 transition-premium";
+                displayGroup.classList.add('hidden');
+                title.textContent = "Akses Akun Petualang";
+                sub.textContent = "Kelola progres, lencana, dan riwayat rute kecamatannmu!";
+                submitBtn.textContent = "Verifikasi Masuk";
+            } else {
+                tabSignup.className = "py-2 rounded-lg text-[10px] font-bold bg-white text-zinc-900 dark:bg-zinc-700 dark:text-white transition-premium shadow-sm";
+                tabSignin.className = "py-2 rounded-lg text-[10px] font-bold text-zinc-500 dark:text-zinc-400 transition-premium";
+                displayGroup.classList.remove('hidden');
+                title.textContent = "Daftar Akun Baru";
+                sub.textContent = "Simpan kemajuan petualanganmu di tingkat awan!";
+                submitBtn.textContent = "Daftar & Hubungkan";
+            }
+        }
+
+        function fillDemoCredentials() {
+            document.getElementById('auth-email-input').value = "kelana";
+            document.getElementById('auth-pass-input').value = "password123";
+            showToast("✍🏽 Mengisi detail akun demo secara otomatis", "info");
+        }
+
+        function handleAuthSubmit() {
+            const emailInput = document.getElementById('auth-email-input').value.trim();
+            const passInput = document.getElementById('auth-pass-input').value.trim();
+            const displayInput = document.getElementById('auth-display-input').value.trim();
+
+            if (!emailInput || !passInput) {
+                showToast("⚠️ Username dan sandi harus diisi!", "error");
+                return;
+            }
+
+            if (activeAuthTab === 'signin') {
+                // Find user in DB
+                const user = usersDB.find(u => u.username.toLowerCase() === emailInput.toLowerCase() || u.email.toLowerCase() === emailInput.toLowerCase());
+                
+                if (user && user.password === passInput) {
+                    currentUser = user;
+                    localStorage.setItem('kecamapkita_current_user', JSON.stringify(currentUser));
+                    
+                    // Trigger dynamic progress merge
+                    mergeGuestHistoryToUser();
+                    
+                    showToast(`👋 Selamat datang kembali, ${currentUser.displayName}!`, "success");
+                    closeAuthModal();
+                    updateUserStatusUI();
+                    updateAdventureTabUI();
+                    updateSpotsFeed();
+                } else {
+                    showToast("❌ Kombinasi kredensial salah. Coba lagi!", "error");
+                }
+            } else {
+                // Sign Up
+                if (!displayInput) {
+                    showToast("⚠️ Silakan isi nama tampilan Anda!", "error");
+                    return;
+                }
+
+                // Check conflict
+                if (usersDB.some(u => u.username.toLowerCase() === emailInput.toLowerCase())) {
+                    showToast("❌ Username sudah terdaftar!", "error");
+                    return;
+                }
+
+                const newUser = {
+                    username: emailInput,
+                    email: `${emailInput}@kecamap.com`,
+                    password: passInput,
+                    displayName: displayInput,
+                    avatar: "🕵🏽‍♂️",
+                    history: []
+                };
+
+                usersDB.push(newUser);
+                localStorage.setItem('kecamapkita_users_db', JSON.stringify(usersDB));
+                
+                currentUser = newUser;
+                localStorage.setItem('kecamapkita_current_user', JSON.stringify(currentUser));
+                
+                mergeGuestHistoryToUser();
+                
+                showToast(`🎉 Akun ${displayInput} berhasil dibuat!`, "success");
+                closeAuthModal();
+                updateUserStatusUI();
+                updateAdventureTabUI();
+                updateSpotsFeed();
+            }
+        }
+
+        function mergeGuestHistoryToUser() {
+            if (guestHistory.length > 0 && currentUser) {
+                // Merge unique items from guestHistory into the currentUser's history
+                let mergedCount = 0;
+                guestHistory.forEach(guestItem => {
+                    if (!currentUser.history.some(userItem => userItem.spotId === guestItem.spotId)) {
+                        currentUser.history.push(guestItem);
+                        mergedCount++;
+                    }
+                });
+
+                // Clear guest log
+                guestHistory = [];
+                localStorage.removeItem('kecamapkita_guest_history');
+
+                if (mergedCount > 0) {
+                    showToast(`☁️ Disinkronkan: ${mergedCount} kemajuan tamu telah digabung!`, "success");
+                }
+
+                // Update usersDB copy
+                const userIndex = usersDB.findIndex(u => u.username === currentUser.username);
+                if (userIndex !== -1) {
+                    usersDB[userIndex].history = currentUser.history;
+                    localStorage.setItem('kecamapkita_users_db', JSON.stringify(usersDB));
+                }
+                localStorage.setItem('kecamapkita_current_user', JSON.stringify(currentUser));
+            }
+        }
+
+        function handleSignOut() {
+            currentUser = null;
+            localStorage.removeItem('kecamapkita_current_user');
+            
+            showToast("🔐 Keluar aman. Anda dalam mode luring (Tamu)", "info");
+            closeProfileModal();
+            updateUserStatusUI();
+            updateAdventureTabUI();
+            updateSpotsFeed();
+        }
+
+        function selectProfileAvatar(emoji) {
+            if (!currentUser) return;
+            currentUser.avatar = emoji;
+            
+            // Rehighlight selection in UI
+            document.querySelectorAll('.avatar-select-pill').forEach(btn => {
+                if (btn.textContent === emoji) {
+                    btn.className = "avatar-select-pill text-lg p-1.5 rounded-xl transition-premium bg-premium-100 dark:bg-premium-900 border border-premium-500/30";
+                } else {
+                    btn.className = "avatar-select-pill text-lg p-1.5 rounded-xl transition-premium hover:bg-zinc-100 dark:hover:bg-zinc-800";
+                }
+            });
+
+            document.getElementById('profile-modal-avatar').textContent = emoji;
+        }
+
+        function saveProfileChanges() {
+            if (!currentUser) return;
+            const newName = document.getElementById('profile-modal-edit-name').value.trim();
+            if (!newName) {
+                showToast("⚠️ Nama tampilan tidak boleh kosong!", "error");
+                return;
+            }
+
+            currentUser.displayName = newName;
+            localStorage.setItem('kecamapkita_current_user', JSON.stringify(currentUser));
+
+            // Save back into main DB
+            const userIndex = usersDB.findIndex(u => u.username === currentUser.username);
+            if (userIndex !== -1) {
+                usersDB[userIndex].displayName = newName;
+                usersDB[userIndex].avatar = currentUser.avatar;
+                localStorage.setItem('kecamapkita_users_db', JSON.stringify(usersDB));
+            }
+
+            showToast("💾 Perubahan profil berhasil disimpan!", "success");
+            closeProfileModal();
+            updateUserStatusUI();
+            updateAdventureTabUI();
+        }
+
+        function updateUserStatusUI() {
+            const avatarEmoji = document.getElementById('header-avatar-emoji');
+            const dot = document.getElementById('header-online-indicator');
+            const promoBanner = document.getElementById('sync-promo-banner');
+
+            if (currentUser) {
+                avatarEmoji.textContent = currentUser.avatar || "🤠";
+                dot.className = "absolute bottom-0 right-0 w-2.5 h-2.5 bg-premium-500 border-2 border-white dark:border-zinc-900 rounded-full transition-premium animate-pulse";
+                promoBanner.classList.add('hidden');
+                
+                // Adventure status indicators
+                document.getElementById('adventure-online-dot').className = "w-1.5 h-1.5 rounded-full bg-premium-500 animate-pulse";
+                document.getElementById('adventure-online-status').textContent = "AWAN SINKRON";
+                document.getElementById('adventure-online-status').className = "font-bold text-premium-400";
+            } else {
+                avatarEmoji.textContent = "👤";
+                dot.className = "absolute bottom-0 right-0 w-2.5 h-2.5 bg-zinc-400 dark:bg-zinc-600 border-2 border-white dark:border-zinc-900 rounded-full transition-premium";
+                promoBanner.classList.remove('hidden');
+
+                // Adventure status indicators
+                document.getElementById('adventure-online-dot').className = "w-1.5 h-1.5 rounded-full bg-zinc-500";
+                document.getElementById('adventure-online-status').textContent = "LOKAL (LURING)";
+                document.getElementById('adventure-online-status').className = "font-bold text-zinc-400";
+            }
+        }
+
+        function getActiveHistory() {
+            return currentUser ? currentUser.history : guestHistory;
+        }
+
+        /* ================= WEATHER ACTIONS ================= */
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                updateThemeToggleIcon(false);
+                showToast("☀️ Mode Terang Diaktifkan", "info");
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                updateThemeToggleIcon(true);
+                showToast("🌙 Mode Gelap Diaktifkan", "info");
+            }
+            updateSpotsFeed();
+            updateAdventureTabUI();
+        }
+
+        function updateThemeToggleIcon(isDark) {
+            const icon = document.getElementById('theme-icon');
+            if (!icon) return;
+            if (isDark) {
+                icon.className = "fa-solid fa-sun text-base text-amber-400";
+            } else {
+                icon.className = "fa-solid fa-moon text-base text-zinc-500 dark:text-zinc-400";
+            }
+        }
+
+        function toggleWeatherDropdown() {
+            const dropdown = document.getElementById('weather-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function updateWeatherWidgetUI() {
+            const data = kecamatanWeatherData[activeKecamatan] || { temp: 30, uv: "Sedang", humidity: "75%", desc: "Cerah Rindang", wind: "10 km/h" };
+            
+            // Set Quick Stats
+            document.getElementById('weather-quick-temp').textContent = `${data.temp}°C`;
+            document.getElementById('weather-station-kec').textContent = activeKecamatan;
+            
+            // Update Icon based on active state
+            const iconEl = document.getElementById('weather-icon');
+            if (activeWeather === 'clear') iconEl.textContent = "☀️";
+            else if (activeWeather === 'cloudy') iconEl.textContent = "☁️";
+            else if (activeWeather === 'rain') iconEl.textContent = "🌧️";
+
+            // Populate Station Stats
+            document.getElementById('weather-val-uv').textContent = data.uv;
+            document.getElementById('weather-val-hum').textContent = data.humidity;
+            document.getElementById('weather-val-wind').textContent = data.wind;
+            document.getElementById('weather-val-desc').textContent = activeWeather === 'clear' ? data.desc : (activeWeather === 'rain' ? "Hujan Deras" : "Mendung Berawan");
+
+            // Update Simulation Button Active Classes
+            const modes = ['clear', 'cloudy', 'rain'];
+            modes.forEach(mode => {
+                const btn = document.getElementById(`btn-sim-${mode}`);
+                if (mode === activeWeather) {
+                    btn.className = "py-1 px-1.5 rounded-lg text-[9px] font-bold bg-premium-500 text-white transition-premium";
+                } else {
+                    btn.className = "py-1 px-1.5 rounded-lg text-[9px] font-bold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 text-zinc-600 dark:text-zinc-300 transition-premium";
+                }
+            });
+
+            // Update Banner
+            updateWeatherBanner(data);
+        }
+
+        function updateWeatherBanner(data) {
+            const banner = document.getElementById('weather-banner');
+            const icon = document.getElementById('weather-banner-icon');
+            const title = document.getElementById('weather-banner-title');
+            const text = document.getElementById('weather-banner-text');
+
+            if (activeWeather === "clear") {
+                banner.className = "p-3.5 bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center space-x-3 transition-premium";
+                icon.textContent = "☀️";
+                title.textContent = `Cuaca Cerah Terdeteksi (${data.temp}°C)`;
+                title.className = "text-[10px] font-extrabold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider";
+                text.textContent = `Hari sempurna untuk aktivitas outdoor! Indeks UV ${data.uv}, disarankan pakai kacamata hitam dan tabir surya.`;
+            } else if (activeWeather === "cloudy") {
+                banner.className = "p-3.5 bg-blue-500/10 dark:bg-blue-500/5 border border-blue-500/20 rounded-2xl flex items-center space-x-3 transition-premium";
+                icon.textContent = "☁️";
+                title.textContent = `Langit Mendung Berawan (${data.temp}°C)`;
+                title.className = "text-[10px] font-extrabold text-blue-800 dark:text-blue-400 uppercase tracking-wider";
+                text.textContent = "Cahaya alami berbaur lembut dengan kabut tipis. Sangat pas untuk fotografi estetika keliling kota tanpa terik menyengat!";
+            } else if (activeWeather === "rain") {
+                banner.className = "p-3.5 bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 rounded-2xl flex items-center space-x-3 transition-premium";
+                icon.textContent = "🌧️";
+                title.textContent = "Sedang Turun Hujan (20°C)";
+                title.className = "text-[10px] font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wider";
+                text.textContent = "Hujan membasahi jalanan. Kami menyarankan Anda singgah di destinasi dalam ruangan (indoor) yang nyaman dan hangat.";
+            }
+        }
+
+        function setWeatherState(state) {
+            activeWeather = state;
+            updateWeatherWidgetUI();
+            updateSpotsFeed();
+            
+            let toastMsg = "";
+            if (state === "clear") toastMsg = "☀️ Cuaca disimulasikan Cerah!";
+            else if (state === "cloudy") toastMsg = "☁️ Cuaca disimulasikan Mendung Berawan!";
+            else if (state === "rain") toastMsg = "🌧️ Cuaca disimulasikan Hujan!";
+            
+            showToast(toastMsg, "success");
+            
+            // Hide dropdown after selection
+            document.getElementById('weather-dropdown').classList.add('hidden');
+        }
+
+        /* ================= CORE GEOLOCATION MAP REDUCE ================= */
+        function detectGPSLocation() {
+            if (navigator.geolocation) {
+                showToast("📡 Sedang menghubungkan ke satelit GPS...", "info");
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const randomKec = mockKecamatan[Math.floor(Math.random() * mockKecamatan.length)];
+                        setActiveKecamatan(randomKec);
+                        showToast(`📍 GPS Terverifikasi! Anda terdeteksi di Kecamatan ${randomKec}.`, "success");
+                    },
+                    (error) => {
+                        const randomKec = mockKecamatan[Math.floor(Math.random() * mockKecamatan.length)];
+                        setActiveKecamatan(randomKec);
+                        showToast(`📡 Sinyal GPS lemah. Memakai koordinat terdekat: Kecamatan ${randomKec}.`, "info");
+                    },
+                    { timeout: 5000 }
+                );
+            } else {
+                showToast("Sensor lokasi tidak didukung pada browser Anda.", "error");
+            }
+        }
+
+        function handleKecamatanSearch(query) {
+            const suggestionsBox = document.getElementById('search-suggestions');
+            if (!query.trim()) {
+                suggestionsBox.classList.add('hidden');
+                return;
+            }
+
+            const filtered = mockKecamatan.filter(k => k.toLowerCase().includes(query.toLowerCase()));
+            
+            if (filtered.length > 0) {
+                suggestionsBox.innerHTML = filtered.map(k => `
+                    <button onclick="setActiveKecamatan('${k}'); clearSearch();" class="w-full text-left px-5 py-3 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800/80 text-zinc-700 dark:text-zinc-200 font-semibold tracking-wide transition-premium border-b border-zinc-50 dark:border-zinc-800 last:border-0">
+                        <i class="fa-solid fa-location-dot text-premium-500 mr-2.5 text-[11px]"></i>Kecamatan ${k}
+                    </button>
+                `).join('');
+                suggestionsBox.classList.remove('hidden');
+            } else {
+                suggestionsBox.innerHTML = `
+                    <div class="px-5 py-4 text-[11px] text-zinc-400 dark:text-zinc-500 italic font-sans">Kecamatan tidak ditemukan. Coba ketik "Ubud" atau "Menteng".</div>
+                `;
+                suggestionsBox.classList.remove('hidden');
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('kecamatan-search').value = '';
+            document.getElementById('search-suggestions').classList.add('hidden');
+        }
+
+        function setActiveKecamatan(kec) {
+            activeKecamatan = kec;
+            document.getElementById('active-kecamatan-label').textContent = "Kecamatan " + kec;
+            
+            updateWeatherWidgetUI();
+            updateSpotsFeed();
+            
+            addBotMessage(`Halo! Selamat bertualang di area Kecamatan **${kec}**! Ada banyak rahasia lokal menarik di sekitar sini. Mau saya beri tahu spot yang ber-vibe *#${activeVibe === 'all' ? 'syahdu' : activeVibe}*?`);
+        }
+
+        function filterByVibe(vibe) {
+            activeVibe = vibe;
+            
+            document.querySelectorAll('.vibe-tag').forEach(tag => {
+                const currentVibe = tag.getAttribute('data-vibe');
+                if (currentVibe === vibe) {
+                    tag.className = "vibe-tag shrink-0 px-4 py-2 rounded-full text-[11px] font-bold bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm transition-premium";
+                } else {
+                    tag.className = "vibe-tag shrink-0 px-4 py-2 rounded-full text-[11px] font-bold bg-zinc-100/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-premium";
+                }
+            });
+
+            updateSpotsFeed();
+        }
+
+        function updateSpotsFeed() {
+            const feed = document.getElementById('spots-feed');
+            
+            const filteredSpots = mockSpots.filter(spot => {
+                const matchKec = activeKecamatan ? spot.kecamatan.toLowerCase() === activeKecamatan.toLowerCase() : true;
+                const matchVibe = activeVibe === 'all' ? true : spot.vibe.toLowerCase() === activeVibe.toLowerCase();
+                return matchKec && matchVibe;
+            });
+
+            // Urutkan berdasarkan adaptasi cuaca:
+            // 1. Jika hujan, utamakan indoor.
+            // 2. Jika cerah, utamakan outdoor.
+            // 3. Jika mendung, seimbangkan namun tunjukkan photogenic tag.
+            filteredSpots.sort((a, b) => {
+                if (activeWeather === "rain") {
+                    if (a.type === "indoor" && b.type === "outdoor") return -1;
+                    if (a.type === "outdoor" && b.type === "indoor") return 1;
+                } else if (activeWeather === "clear") {
+                    if (a.type === "outdoor" && b.type === "indoor") return -1;
+                    if (a.type === "indoor" && b.type === "outdoor") return 1;
+                }
+                return 0;
+            });
+
+            if (filteredSpots.length === 0) {
+                feed.innerHTML = `
+                    <div class="text-center py-16 px-6">
+                        <div class="w-14 h-14 bg-zinc-100 dark:bg-zinc-800/60 rounded-full flex items-center justify-center text-zinc-400 dark:text-zinc-500 mx-auto mb-4">
+                            <i class="fa-solid fa-mountain-sun text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-xs text-zinc-700 dark:text-zinc-300 uppercase tracking-widest">Destinasi Kosong</h4>
+                        <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1.5 leading-relaxed">Belum ditemukan destinasi dengan karakter <strong>#${activeVibe}</strong> di Kecamatan ${activeKecamatan || 'sekitar Anda'}. Silakan coba saring vibe lainnya!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            feed.innerHTML = filteredSpots.map(spot => {
+                const vibeBadgeColor = getVibeBadgeClass(spot.vibe);
+                
+                // Weather Advisory Badge
+                let weatherBadge = "";
+                if (activeWeather === "rain") {
+                    weatherBadge = spot.type === "indoor" 
+                        ? `<span class="px-2.5 py-1 bg-emerald-500 text-[8px] font-extrabold text-white rounded-lg uppercase tracking-wider shadow-sm"><i class="fa-solid fa-umbrella mr-1 animate-bounce"></i> Rekomendasi Rainproof</span>`
+                        : `<span class="px-2.5 py-1 bg-amber-500/80 backdrop-blur-sm text-[8px] font-extrabold text-white rounded-lg uppercase tracking-wider"><i class="fa-solid fa-cloud-showers-heavy mr-1"></i> Bawa Payung</span>`;
+                } else if (activeWeather === "clear") {
+                    weatherBadge = spot.type === "outdoor"
+                        ? `<span class="px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-[8px] font-extrabold text-white rounded-lg uppercase tracking-wider"><i class="fa-solid fa-sun mr-1 animate-spin"></i> Sempurna Hari Ini</span>`
+                        : "";
+                } else if (activeWeather === "cloudy") {
+                    weatherBadge = spot.type === "outdoor"
+                        ? `<span class="px-2.5 py-1 bg-blue-500/80 backdrop-blur-sm text-[8px] font-extrabold text-white rounded-lg uppercase tracking-wider"><i class="fa-solid fa-camera mr-1"></i> Golden Photo Light</span>`
+                        : "";
+                }
+
+                return `
+                    <div onclick="openSpotModal(${spot.id})" class="group bg-white dark:bg-zinc-900/40 rounded-3xl overflow-hidden border border-zinc-100 dark:border-zinc-800/40 hover:border-zinc-200/60 dark:hover:border-zinc-700/60 shadow-sm cursor-pointer transition-premium">
+                        <div class="relative aspect-[16/10] bg-zinc-100 dark:bg-zinc-850 overflow-hidden">
+                            <img src="${spot.image}" alt="${spot.name}" class="w-full h-full object-cover group-hover:scale-105 transition-premium duration-500" onerror="this.src='https://placehold.co/600x400/101010/ffffff?text=${spot.name}'">
+                            <div class="absolute top-4 left-4 flex flex-col space-y-1.5 items-start">
+                                <div class="flex space-x-1.5">
+                                    <span class="px-2.5 py-1 bg-zinc-950/75 backdrop-blur-md text-[8px] font-extrabold text-white rounded-lg uppercase tracking-wider">Kec. ${spot.kecamatan}</span>
+                                    <span class="px-2.5 py-1 ${vibeBadgeColor} text-[8px] font-extrabold rounded-lg uppercase tracking-wider">#${spot.vibe}</span>
+                                </div>
+                                ${weatherBadge}
+                            </div>
+                            <div class="absolute bottom-4 right-4 bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-lg flex items-center space-x-1 text-[10px] font-bold text-white">
+                                <i class="fa-solid fa-star text-amber-400"></i>
+                                <span>${spot.rating}</span>
+                            </div>
+                        </div>
+                        <div class="p-4 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-zinc-800 dark:text-zinc-100 text-sm tracking-tight leading-none">${spot.name}</h3>
+                                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold shrink-0"><i class="fa-solid fa-person-walking mr-1.5"></i>${spot.distance}</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-400 dark:text-zinc-500 line-clamp-2 leading-relaxed font-medium">${spot.description}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getVibeBadgeClass(vibe) {
+            switch(vibe) {
+                case 'syahdu': return 'bg-emerald-100/80 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400';
+                case 'kenyang': return 'bg-orange-100/80 dark:bg-orange-950/40 text-orange-800 dark:text-orange-400';
+                case 'kreatif': return 'bg-blue-100/80 dark:bg-blue-950/40 text-blue-800 dark:text-blue-400';
+                case 'sejarah': return 'bg-amber-100/80 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400';
+                default: return 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200';
+            }
+        }
+
+        function openSpotModal(id) {
+            const spot = mockSpots.find(s => s.id === id);
+            if (!spot) return;
+
+            currentSelectedSpot = spot;
+
+            document.getElementById('modal-img').src = spot.image;
+            document.getElementById('modal-img').alt = spot.name;
+            document.getElementById('modal-title').textContent = spot.name;
+            document.getElementById('modal-kecamatan-badge').textContent = `Kecamatan ${spot.kecamatan}`;
+            document.getElementById('modal-rating').textContent = spot.rating;
+            document.getElementById('modal-description').textContent = spot.description;
+            document.getElementById('modal-ai-advice').innerHTML = `"${spot.aiAdvice}"`;
+            document.getElementById('modal-price').textContent = spot.price;
+            document.getElementById('modal-hours').textContent = spot.hours;
+            document.getElementById('modal-distance').textContent = spot.distance;
+            document.getElementById('modal-best-time-label').textContent = spot.bestTime;
+
+            // Jam Paling Syahdu (Crowdedness Meter) Rendering
+            const pBar = document.getElementById('crowd-bar-pagi');
+            const sBar = document.getElementById('crowd-bar-siang');
+            const soBar = document.getElementById('crowd-bar-sore');
+            const mBar = document.getElementById('crowd-bar-malam');
+
+            pBar.style.height = `${spot.crowdedness.pagi}%`;
+            sBar.style.height = `${spot.crowdedness.siang}%`;
+            soBar.style.height = `${spot.crowdedness.sore}%`;
+            mBar.style.height = `${spot.crowdedness.malam}%`;
+
+            // Warnai bar terendah (ter-syahdu/ter-sepi) dengan warna Premium Green
+            const heights = [spot.crowdedness.pagi, spot.crowdedness.siang, spot.crowdedness.sore, spot.crowdedness.malam];
+            const minHeight = Math.min(...heights);
+
+            const resetBarColors = (bar) => {
+                bar.className = "w-full rounded-t-lg transition-all duration-700 bg-zinc-200 dark:bg-zinc-800";
+            };
+            resetBarColors(pBar);
+            resetBarColors(sBar);
+            resetBarColors(soBar);
+            resetBarColors(mBar);
+
+            if (spot.crowdedness.pagi === minHeight) pBar.className = "w-full rounded-t-lg transition-all duration-700 bg-premium-500 shadow-[0_-4px_12px_rgba(15,159,89,0.3)]";
+            else if (spot.crowdedness.siang === minHeight) sBar.className = "w-full rounded-t-lg transition-all duration-700 bg-premium-500 shadow-[0_-4px_12px_rgba(15,159,89,0.3)]";
+            else if (spot.crowdedness.sore === minHeight) soBar.className = "w-full rounded-t-lg transition-all duration-700 bg-premium-500 shadow-[0_-4px_12px_rgba(15,159,89,0.3)]";
+            else if (spot.crowdedness.malam === minHeight) mBar.className = "w-full rounded-t-lg transition-all duration-700 bg-premium-500 shadow-[0_-4px_12px_rgba(15,159,89,0.3)]";
+
+            const vibeBadge = document.getElementById('modal-vibe-badge');
+            vibeBadge.innerHTML = `
+                <span class="px-3 py-1 ${getVibeBadgeClass(spot.vibe)} text-[9px] font-extrabold rounded-lg uppercase tracking-wider">#${spot.vibe}</span>
+            `;
+
+            const facilitiesBox = document.getElementById('modal-facilities');
+            facilitiesBox.innerHTML = spot.facilities.map(fac => `
+                <span class="px-2.5 py-1 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400 rounded-lg text-[9px] font-bold border border-zinc-100 dark:border-zinc-800"><i class="fa-solid fa-circle-check text-premium-500 mr-1.5 text-[10px]"></i>${fac}</span>
+            `).join('');
+
+            const btn = document.getElementById('modal-checkin-btn');
+            const activeHistory = getActiveHistory();
+            const hasVisited = activeHistory.some(v => v.spotId === spot.id);
+            
+            if (hasVisited) {
+                btn.className = "flex-[2.2] flex items-center justify-center space-x-2 py-3.5 bg-zinc-100 dark:bg-zinc-850 text-zinc-400 dark:text-zinc-500 rounded-2xl font-bold text-xs cursor-not-allowed border dark:border-zinc-800";
+                btn.innerHTML = `<i class="fa-solid fa-circle-check text-premium-500"></i><span>Selesai (+150 XP)</span>`;
+                btn.disabled = true;
+            } else {
+                btn.className = "flex-[2.2] flex items-center justify-center space-x-2 py-3.5 bg-premium-500 hover:bg-premium-600 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-bold text-xs shadow-lg shadow-premium-500/10 dark:shadow-none transition-premium";
+                btn.innerHTML = `<i class="fa-solid fa-location-crosshairs animate-pulse"></i><span>Tandai Kunjungan (+150 XP)</span>`;
+                btn.disabled = false;
+            }
+
+            const modal = document.getElementById('spot-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                modal.querySelector('.transform').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeSpotModal() {
+            const modal = document.getElementById('spot-modal');
+            modal.querySelector('.transform').classList.add('translate-y-full');
+            modal.classList.remove('opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 400);
+        }
+
+        function openNavigation() {
+            if (!currentSelectedSpot) return;
+            const lat = currentSelectedSpot.lat;
+            const lng = currentSelectedSpot.lng;
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            window.open(url, '_blank');
+        }
+
+        function triggerCheckIn() {
+            if (!currentSelectedSpot) return;
+            
+            const spotId = currentSelectedSpot.id;
+            const activeHistory = getActiveHistory();
+            const hasVisited = activeHistory.some(v => v.spotId === spotId);
+            if (hasVisited) return;
+
+            showToast("⏳ Menghubungkan GPS untuk verifikasi kehadiran...", "info");
+            
+            setTimeout(() => {
+                const now = new Date();
+                
+                // Track previous rank status to detect level up
+                const prevStats = getXPAndRank(activeHistory.length);
+
+                const newVisit = {
+                    spotId: spotId,
+                    visitedAt: now.toISOString()
+                };
+
+                if (currentUser) {
+                    currentUser.history.push(newVisit);
+                    localStorage.setItem('kecamapkita_current_user', JSON.stringify(currentUser));
+                    
+                    // Update user in principal DB
+                    const idx = usersDB.findIndex(u => u.username === currentUser.username);
+                    if (idx !== -1) {
+                        usersDB[idx].history = currentUser.history;
+                        localStorage.setItem('kecamapkita_users_db', JSON.stringify(usersDB));
+                    }
+                } else {
+                    guestHistory.push(newVisit);
+                    localStorage.setItem('kecamapkita_guest_history', JSON.stringify(guestHistory));
+                }
+                
+                const updatedHistory = getActiveHistory();
+                const newStats = getXPAndRank(updatedHistory.length);
+
+                // Show notification badge on Petualangan tab button
+                document.getElementById('level-indicator-badge').classList.remove('hidden');
+                
+                // Redraw tabs and interfaces
+                updateAdventureTabUI();
+                closeSpotModal();
+                
+                showToast(`🎉 +150 XP! Jejak di "${currentSelectedSpot.name}" berhasil dicatat!`, "success");
+
+                // Detect Level Up Event
+                if (newStats.activeRank.level > prevStats.activeRank.level) {
+                    setTimeout(() => {
+                        triggerLevelUpCelebration(newStats.activeRank);
+                    }, 800);
+                }
+            }, 1200);
+        }
+
+        function triggerLevelUpCelebration(rank) {
+            document.getElementById('levelup-title').textContent = rank.title;
+            document.getElementById('levelup-badge').textContent = rank.emoji;
+            document.getElementById('levelup-desc').textContent = `Selamat! Petualangan hebatmu mengantarmu ke Rank ${rank.level}: "${rank.title}". Teruslah menjelajahi rona kecamatan kita!`;
+
+            const overlay = document.getElementById('level-up-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+                document.getElementById('levelup-badge').classList.remove('scale-75');
+                document.getElementById('levelup-badge').classList.add('scale-100');
+            }, 50);
+
+            triggerConfetti();
+        }
+
+        function closeLevelUpOverlay() {
+            const overlay = document.getElementById('level-up-overlay');
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                document.getElementById('levelup-badge').classList.remove('scale-100');
+                document.getElementById('levelup-badge').classList.add('scale-75');
+            }, 400);
+        }
+
+        function triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            
+            let particles = [];
+            const colors = ['#0f9f59', '#34d399', '#3b82f6', '#f59e0b', '#ec4899', '#10b981'];
+            
+            for (let i = 0; i < 120; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height - 100, 
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: -Math.random() * 15 - 8,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    radius: Math.random() * 4 + 4,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 8,
+                    gravity: 0.35
+                });
+            }
+            
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += p.gravity;
+                    p.rotation += p.rotationSpeed;
+                    
+                    if (p.y < canvas.height && p.x > 0 && p.x < canvas.width) {
+                        active = true;
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate(p.rotation * Math.PI / 180);
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.radius, -p.radius, p.radius * 2, p.radius * 2);
+                        ctx.restore();
+                    }
+                });
+                
+                if (active) {
+                    requestAnimationFrame(draw);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            draw();
+        }
+
+        function getXPAndRank(visitedCount) {
+            const totalXp = visitedCount * 150;
+            let activeRank = rankSystem[0];
+            let nextRank = rankSystem[1];
+            
+            for (let i = 0; i < rankSystem.length; i++) {
+                if (totalXp >= rankSystem[i].minXp && totalXp <= rankSystem[i].maxXp) {
+                    activeRank = rankSystem[i];
+                    nextRank = rankSystem[i + 1] || null;
+                    break;
+                }
+            }
+            return { totalXp, activeRank, nextRank };
+        }
+
+        function filterTime(timeScale) {
+            activeTimeFilter = timeScale;
+            document.querySelectorAll('.time-filter-pill').forEach(pill => {
+                const currentScale = pill.getAttribute('data-time');
+                if (currentScale === timeScale) {
+                    pill.className = "time-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-bold bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm transition-premium";
+                } else {
+                    pill.className = "time-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-premium";
+                }
+            });
+            updateAdventureTabUI();
+        }
+
+        function updateAdventureTabUI() {
+            const history = getActiveHistory();
+            const stats = getXPAndRank(history.length);
+            
+            // Render Stats on Core Panels
+            document.getElementById('rank-title').textContent = stats.activeRank.title;
+            document.getElementById('rank-level-label').textContent = `Level ${stats.activeRank.level}`;
+            document.getElementById('rank-emoji-container').textContent = stats.activeRank.emoji;
+            
+            // Set Progress Bar calculations
+            let xpNextLimit = stats.nextRank ? stats.nextRank.minXp : stats.activeRank.maxXp;
+            let currentXpProgress = stats.totalXp;
+            let progressPct = stats.nextRank ? Math.min(100, (currentXpProgress / xpNextLimit) * 100) : 100;
+            
+            document.getElementById('xp-progress-label').textContent = stats.nextRank ? `XP: ${currentXpProgress} / ${xpNextLimit}` : "XP Maksimum Tercapai";
+            document.getElementById('xp-percentage-label').textContent = `${Math.round(progressPct)}%`;
+            document.getElementById('xp-bar').style.width = `${progressPct}%`;
+            
+            document.getElementById('stat-total-visits').textContent = history.length;
+            document.getElementById('stat-total-xp').textContent = stats.totalXp;
+            
+            const uniqueDistricts = [...new Set(history.map(item => {
+                const spot = mockSpots.find(s => s.id === item.spotId);
+                return spot ? spot.kecamatan : null;
+            }).filter(Boolean))];
+            document.getElementById('stat-unique-districts').textContent = uniqueDistricts.length;
+
+            const now = new Date();
+            const filteredHistory = history.filter(item => {
+                const visitDate = new Date(item.visitedAt);
+                const diffTime = Math.abs(now - visitDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (activeTimeFilter === 'week') {
+                    return diffDays <= 7;
+                } else if (activeTimeFilter === 'month') {
+                    return diffDays <= 30;
+                }
+                return true; 
+            });
+
+            filteredHistory.sort((a, b) => new Date(b.visitedAt) - new Date(a.visitedAt));
+
+            const listContainer = document.getElementById('visited-timeline-list');
+            if (filteredHistory.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-8 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50/50 dark:bg-zinc-950/20">
+                        <i class="fa-solid fa-shoe-prints text-zinc-300 dark:text-zinc-700 text-lg mb-2 block animate-bounce"></i>
+                        <span class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Belum ada jejak</span>
+                        <p class="text-[9px] text-zinc-400 dark:text-zinc-500 mt-1">Belum ada tempat dikunjungi dalam rentang waktu ini.</p>
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = filteredHistory.map(item => {
+                    const spot = mockSpots.find(s => s.id === item.spotId);
+                    if (!spot) return '';
+                    
+                    const dateObj = new Date(item.visitedAt);
+                    const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+                    return `
+                        <div class="flex items-center justify-between p-3.5 bg-zinc-50/70 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800/40 rounded-2xl transition-premium hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50">
+                            <div class="flex items-center space-x-3 overflow-hidden">
+                                <div class="w-11 h-11 rounded-xl bg-zinc-200 dark:bg-zinc-700 overflow-hidden shrink-0">
+                                    <img src="${spot.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100/111/fff?text=Spot'">
+                                </div>
+                                <div class="overflow-hidden">
+                                    <h4 class="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 truncate leading-none font-sans">${spot.name}</h4>
+                                    <span class="text-[9px] font-extrabold text-premium-600 dark:text-premium-400 tracking-wider uppercase block mt-1">Kec. ${spot.kecamatan}</span>
+                                    <span class="text-[8px] text-zinc-400 dark:text-zinc-500 mt-0.5 block font-medium"><i class="fa-regular fa-clock mr-1"></i>${formattedDate}, ${formattedTime}</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end shrink-0">
+                                <span class="px-2 py-0.5 bg-premium-100/70 dark:bg-premium-900/20 text-premium-700 dark:text-premium-400 text-[9px] font-extrabold rounded-lg tracking-wider">+150 XP</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const achievements = [
+                { id: "syahdu_badge", name: "Penyembuh Jiwa", desc: "Kunjungi 2 spot ber-vibe #syahdu", icon: "🍃", count: history.filter(h => mockSpots.find(s => s.id === h.spotId)?.vibe === 'syahdu').length, target: 2 },
+                { id: "kenyang_badge", name: "Kolektor Rasa", desc: "Kunjungi 1 kuliner #kenyang", icon: "🍜", count: history.filter(h => mockSpots.find(s => s.id === h.spotId)?.vibe === 'kenyang').length, target: 1 },
+                { id: "kreatif_badge", name: "Inspirator", desc: "Kunjungi 1 tongkrongan #kreatif", icon: "🎨", count: history.filter(h => mockSpots.find(s => s.id === h.spotId)?.vibe === 'kreatif').length, target: 1 },
+                { id: "traveler_badge", name: "Kecamap Overlord", desc: "Kunjungi 3 kecamatan berbeda", icon: "🗺️", count: uniqueDistricts.length, target: 3 }
+            ];
+
+            const achievementGrid = document.getElementById('achievement-grid');
+            achievementGrid.innerHTML = achievements.map(ach => {
+                const unlocked = ach.count >= ach.target;
+                return `
+                    <div class="relative p-3.5 rounded-2xl border ${unlocked ? 'bg-premium-50/40 dark:bg-premium-950/10 border-premium-100/50 dark:border-premium-900/30' : 'bg-zinc-50 dark:bg-zinc-900/30 border-zinc-100 dark:border-zinc-800/40'} transition-premium">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl ${unlocked ? 'bg-premium-100/70 dark:bg-premium-900/30 text-premium-600 dark:text-premium-400 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600'} flex items-center justify-center text-lg shrink-0">
+                                <span>${unlocked ? ach.icon : '🔒'}</span>
+                            </div>
+                            <div class="overflow-hidden">
+                                <h4 class="text-[11px] font-bold ${unlocked ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400 dark:text-zinc-600'} truncate leading-tight font-sans">${ach.name}</h4>
+                                <span class="text-[8px] text-zinc-400 dark:text-zinc-500 block leading-tight mt-0.5">${ach.desc}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between text-[8px] font-semibold text-zinc-400 dark:text-zinc-500">
+                            <span>PROGRES</span>
+                            <span>${Math.min(ach.count, ach.target)}/${ach.target}</span>
+                        </div>
+                        <div class="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden mt-1 shadow-inner">
+                            <div class="h-full bg-premium-500 rounded-full" style="width: ${(Math.min(ach.count, ach.target) / ach.target) * 100}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ================= AI CHAT ASSISTANT HANDLER ================= */
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            appendChatMessage(query, 'user');
+            input.value = '';
+
+            setTimeout(() => {
+                const lower = query.toLowerCase();
+                let reply = "";
+
+                const wData = kecamatanWeatherData[activeKecamatan];
+                const weatherContext = activeWeather === "rain" 
+                    ? "Lagi hujan rintik sendu begini," 
+                    : (activeWeather === "cloudy" ? "Melihat langit mendung teduh ini," : "Berhubung hari ini cerah benderang,");
+
+                if (lower.includes('seblak') || lower.includes('makan') || lower.includes('kuliner') || lower.includes('kenyang') || lower.includes('lapar')) {
+                    reply = `${weatherContext} di wilayah **Kecamatan ${activeKecamatan}** paling mantap melipir cari kuliner berkuah hangat. Kalo mau dapet citarasa lokal yang gurih khas, datangi spot makan legendaris bertanda bintang emas di suapan suapnya!`;
+                } else if (lower.includes('tenang') || lower.includes('sepi') || lower.includes('syahdu') || lower.includes('melamun')) {
+                    reply = `Mencari ketenangan ya? ${weatherContext} di sekitar **Kecamatan ${activeKecamatan}** (Suhu sekitar ${wData.temp}°C) ada sudut teduh yang udaranya sejuk banget. Bagusnya berkunjung sore jam 4 pas biar berasa milik sendiri.`;
+                } else if (lower.includes('kopi') || lower.includes('kafe') || lower.includes('colokan') || lower.includes('nugas')) {
+                    reply = `Cari tempat teduh ber-AC buat nugas? Pas banget, ${weatherContext} di area **Kecamatan ${activeKecamatan}** ada tongkrongan kreatif estetik yang punya colokan ramah laptop dan Wi-Fi kencang.`;
+                } else {
+                    reply = `Pertanyaan yang bagus sekali! Sebagai info tambahan, cuaca di **Kecamatan ${activeKecamatan}** saat ini sedang **${wData.desc}**. Satu saran dari Pak RT: coba sesekali melipir lewat jalan kecil atau gang pemukiman, di situlah letak keindahan asli daerah kita!`;
+                }
+
+                appendChatMessage(reply, 'bot');
+            }, 1000);
+        }
+
+        function appendChatMessage(text, sender) {
+            const chatWindow = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            
+            if (sender === 'user') {
+                msgDiv.className = "flex items-start space-x-3 justify-end";
+                msgDiv.innerHTML = `
+                    <div class="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 p-3.5 rounded-2xl rounded-tr-none shadow-sm max-w-[80%] text-[12px] leading-relaxed font-medium">
+                        ${text}
+                    </div>
+                `;
+            } else {
+                msgDiv.className = "flex items-start space-x-3";
+                msgDiv.innerHTML = `
+                    <div class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-sm shrink-0">👨🏽‍🦳</div>
+                    <div class="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-3.5 rounded-2xl rounded-tl-none shadow-sm max-w-[80%] text-[12px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                        ${text}
+                    </div>
+                `;
+            }
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function addBotMessage(text) {
+            setTimeout(() => {
+                appendChatMessage(text, 'bot');
+            }, 800);
+        }
+
+        function toggleTab(tabId) {
+            activeTab = tabId;
+            
+            document.querySelectorAll('.app-tab').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.className = "flex flex-col items-center space-y-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-premium";
+            });
+            document.getElementById(`nav-${tabId}`).className = "flex flex-col items-center space-y-1 text-premium-600 dark:text-premium-400 font-bold transition-premium";
+
+            if (tabId === 'adventure') {
+                document.getElementById('level-indicator-badge').classList.add('hidden');
+                updateAdventureTabUI();
+            }
+        }
+
+        /* ================= TOASTER SYSTEMS ================= */
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast-notification');
+            const msgText = document.getElementById('toast-message');
+            const icon = document.getElementById('toast-icon');
+
+            msgText.textContent = message;
+
+            if (type === "success") {
+                icon.innerHTML = `<i class="fa-solid fa-circle-check text-premium-500"></i>`;
+            } else if (type === "info") {
+                icon.innerHTML = `<i class="fa-solid fa-circle-info text-sky-400"></i>`;
+            } else if (type === "error") {
+                icon.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-500"></i>`;
+            }
+
+            toast.classList.remove('opacity-0', 'translate-y-20', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                hideToast();
+            }, 4000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast-notification');
+            toast.classList.add('opacity-0', 'translate-y-20', 'pointer-events-none');
+            toast.classList.remove('opacity-100', 'translate-y-0');
+        }
+    </script>
+</body>
+</html>
