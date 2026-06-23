@@ -12,16 +12,24 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 class UserResponse(UserBase):
     id: UUID
     total_xp: int
     level: int
+    checkin_count: Optional[int] = 0
+    district_count: Optional[int] = 0
     class Config:
         from_attributes = True
 
 class CheckinBase(BaseModel):
     lat: float
     lng: float
+    spot_lat: Optional[float] = None
+    spot_lng: Optional[float] = None
 
 class CheckinResponse(BaseModel):
     id: UUID
@@ -59,3 +67,4 @@ class ChatRequest(BaseModel):
     message: str
     lat: float
     lng: float
+    district: Optional[str] = "Tidak diketahui"

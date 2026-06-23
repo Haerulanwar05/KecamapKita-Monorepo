@@ -2,51 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert, Linking, Platform, TextInput, ScrollView, Modal } from 'react-native';
 import * as Location from 'expo-location';
 import { FontAwesome5 } from '@expo/vector-icons';
+import * as SecureStore from 'expo-secure-store';
 
-const mockSpots = [
-    {
-        id: 1, name: "Taman Suropati", kecamatan: "Menteng", vibe: "syahdu",
-        description: "Taman hijau nan rimbun di jantung kawasan elite Menteng. Tempat bertemunya seniman musik.",
-        image: "https://images.unsplash.com/photo-1596306499317-8490232098fa?auto=format&fit=crop&w=800&q=80",
-        rating: 4.8, distance: "0.8 km",
-        facilities: ["Taman Rindang", "Wi-Fi Area", "Bangku Taman"], aiAdvice: "Kalo ke sini enakan sore jam 4-an, ada live music gratis!"
-    },
-    {
-        id: 2, name: "Nasi Uduk Gondangdia", kecamatan: "Menteng", vibe: "kenyang",
-        description: "Nasi uduk legendaris bernuansa khas Betawi asli sejak tahun 1993. Terkenal dengan bungkus daun pisangnya.",
-        image: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&w=800&q=80",
-        rating: 4.6, distance: "1.2 km",
-        facilities: ["Parkiran Luas", "Area Ber-AC", "Cashless"], aiAdvice: "Pesan komplit ya! Usus goreng garingnya itu rahasia warga RT sini."
-    },
-    {
-        id: 3, name: "Jatinangor House", kecamatan: "Jatinangor", vibe: "kreatif",
-        description: "Kafe estetik dengan nuansa modern yang digandrungi mahasiswa lokal untuk nugas dan belajar.",
-        image: "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=800&q=80",
-        rating: 4.7, distance: "2.5 km",
-        facilities: ["Banyak Colokan", "Wi-Fi Kencang", "Ruang Rapat"], aiAdvice: "Kopi susu creamy di sini juara dunia buat nemenin nugas."
-    },
-    {
-        id: 4, name: "Hutan Pinus Batu Kuda", kecamatan: "Jatinangor", vibe: "syahdu",
-        description: "Destinasi wisata alam asri di kaki Gunung Manglayang. Pemandangan barisan pohon pinus yang menjulang.",
-        image: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80",
-        rating: 4.9, distance: "4.1 km",
-        facilities: ["Camping Ground", "Hammock", "Toilet Bersih"], aiAdvice: "Berangkat jam 6 pagi sesudah subuh buat dapet kabut estetik."
-    },
-    {
-        id: 5, name: "Seniman Coffee Ubud", kecamatan: "Ubud", vibe: "kreatif",
-        description: "Pionir kopi gelombang ketiga di jantung Ubud. Menyajikan kopi berkualitas tinggi berpadu dengan furnitur rancangan.",
-        image: "https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=800&q=80",
-        rating: 4.9, distance: "0.5 km",
-        facilities: ["Art Gallery", "Specialty Coffee", "Barista Bar"], aiAdvice: "Pesan Cold Brew sambil ngobrol sama turis atau seniman lokal."
-    },
-    {
-        id: 6, name: "Teras Sawah Tegalalang", kecamatan: "Ubud", vibe: "syahdu",
-        description: "Pemandangan sawah terasering berundak-undak hijau ikonik yang mengagumkan.",
-        image: "https://images.unsplash.com/photo-1558230315-5927395092cf?auto=format&fit=crop&w=800&q=80",
-        rating: 4.8, distance: "5.0 km",
-        facilities: ["Tracking Path", "Spot Foto", "Resto Sawah"], aiAdvice: "Jalan turun melintasi petak sawah ke sisi seberang, suasananya lebih magis."
-    }
-];
+interface SpotData {
+    id: number;
+    name: string;
+    kecamatan: string;
+    vibe: string;
+    description: string;
+    image: string;
+    rating: number;
+    distance: string;
+    facilities: string[];
+    aiAdvice: string;
+    lat: number;
+    lng: number;
+}
 
 const vibes = [
     { id: 'all', label: '✨ Semua Vibe' },
@@ -60,7 +31,9 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [activeVibe, setActiveVibe] = useState('all');
   const [search, setSearch] = useState('');
-  const [selectedSpot, setSelectedSpot] = useState<typeof mockSpots[0] | null>(null);
+  const [activeKecamatan, setActiveKecamatan] = useState('Mencari lokasi...');
+  const [spots, setSpots] = useState<SpotData[]>([]);
+  const [selectedSpot, setSelectedSpot] = useState<SpotData | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -68,14 +41,102 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
       if (status !== 'granted') return;
       let loc = await Location.getCurrentPositionAsync({});
       setLocation(loc);
+      
+      // Ambil nama wilayah asli dari Google/Apple Maps bawaan HP
+      try {
+          const geocode = await Location.reverseGeocodeAsync({
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude
+          });
+          if (geocode && geocode.length > 0) {
+              // 'district' biasanya mewakili Kecamatan/Kelurahan di Indonesia
+              const districtName = geocode[0].district || geocode[0].city || geocode[0].subregion || "Tidak Diketahui";
+              setActiveKecamatan(districtName);
+          }
+      } catch (e) {
+          console.log("Gagal mendapatkan nama wilayah:", e);
+      }
     })();
   }, []);
+
+  // KURIR MULAI BEKERJA: Mengambil data dari Backend
+  useEffect(() => {
+    if (!location) return;
+    const fetchSpots = async () => {
+      try {
+        // AWAS: Harus disetel sesuai IP Lokal Wi-Fi Anda!
+        const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:8000'; 
+        
+        // Fetch Data Tempat Wisata
+        const res = await fetch(`${API_URL}/api/spots?lat=${location.coords.latitude}&lng=${location.coords.longitude}&vibe=all`);
+        const data = await res.json();
+        
+        if (Array.isArray(data)) {
+            const formattedSpots = data.map((s: any) => ({
+                id: s.id,
+                name: s.name,
+                kecamatan: "Destinasi", 
+                vibe: s.vibe || "syahdu",
+                description: s.description || "Tidak ada deskripsi",
+                image: s.image_url || 'https://images.unsplash.com/photo-1596306499317-8490232098fa?w=800',
+                rating: 4.8, 
+                distance: s.distance ? (s.distance / 1000).toFixed(1) + " km" : "0 km",
+                facilities: ["Area Umum", "Parkir"],
+                aiAdvice: "Cobain datang dan rasakan suasananya langsung!",
+                lat: s.lat,
+                lng: s.lng
+            }));
+            setSpots(formattedSpots);
+        }
+      } catch (e) {
+        console.error("Gagal mengambil data dari Backend:", e);
+      }
+    };
+    fetchSpots();
+  }, [location]);
 
   const openDirections = (lat: number, lng: number, name: string) => {
     const scheme = Platform.select({ ios: 'maps://app?daddr=', android: 'geo:0,0?q=' });
     const latLng = `${lat},${lng}`;
     const url = Platform.select({ ios: `${scheme}${latLng}`, android: `${scheme}${latLng}(${encodeURIComponent(name)})` });
     if (url) Linking.openURL(url);
+  };
+
+  const handleCheckin = async () => {
+    if (!location || !selectedSpot) return;
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      if (!token) {
+        Alert.alert('Belum Masuk', 'Silakan daftar atau masuk terlebih dahulu di menu Petualangan.');
+        return;
+      }
+
+      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:8000';
+      const body = {
+        lat: location.coords.latitude,
+        lng: location.coords.longitude,
+        spot_lat: selectedSpot.lat,
+        spot_lng: selectedSpot.lng
+      };
+
+      const res = await fetch(`${API_URL}/api/spots/${selectedSpot.id}/checkin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        Alert.alert('Gagal Check-in', data.detail || 'Terjadi kesalahan');
+      } else {
+        Alert.alert('Berhasil! 🎉', 'Kunjungan ditandai! Anda mendapatkan +150 XP. Cek profil Petualangan Anda!');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Gagal menyambung ke server');
+    }
   };
 
   const getVibeColor = (vibe: string) => {
@@ -85,7 +146,7 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
       return '#71717a';
   };
 
-  const renderSpot = ({ item }: { item: typeof mockSpots[0] }) => (
+  const renderSpot = ({ item }: { item: SpotData }) => (
     <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={() => setSelectedSpot(item)}>
         <View style={styles.imageContainer}>
             <Image source={{ uri: item.image }} style={styles.cardImage} />
@@ -116,7 +177,7 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
     </TouchableOpacity>
   );
 
-  const filteredSpots = mockSpots.filter(s => 
+  const filteredSpots = spots.filter(s => 
       (activeVibe === 'all' || s.vibe === activeVibe) &&
       s.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -153,7 +214,7 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
         <View style={styles.activeKecamatanBox}>
             <View style={styles.activeDot} />
             <Text style={[styles.activeKecamatanText, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
-                Destinasi di <Text style={{fontWeight: 'bold', color: isDark ? '#d4d4d8' : '#3f3f46'}}>Kecamatan Menteng</Text>
+                Destinasi di <Text style={{fontWeight: 'bold', color: isDark ? '#d4d4d8' : '#3f3f46'}}>Kecamatan {activeKecamatan.toUpperCase()}</Text>
             </Text>
         </View>
       </View>
@@ -258,13 +319,13 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
                             <View style={styles.modalActions}>
                                 <TouchableOpacity 
                                     style={[styles.btnRoute, { backgroundColor: isDark ? '#27272a' : '#f4f4f5' }]}
-                                    onPress={() => openDirections(-6.2, 106.8, selectedSpot.name)}
+                                    onPress={() => openDirections(selectedSpot.lat, selectedSpot.lng, selectedSpot.name)}
                                 >
                                     <FontAwesome5 name="directions" size={14} color="#0f9f59" />
                                     <Text style={[styles.btnRouteText, { color: isDark ? '#ffffff' : '#18181b' }]}>Rute</Text>
                                 </TouchableOpacity>
 
-                                <TouchableOpacity style={styles.btnCheckin}>
+                                <TouchableOpacity style={styles.btnCheckin} onPress={handleCheckin}>
                                     <FontAwesome5 name="location-arrow" size={14} color="#ffffff" />
                                     <Text style={styles.btnCheckinText}>Tandai Kunjungan (+150 XP)</Text>
                                 </TouchableOpacity>

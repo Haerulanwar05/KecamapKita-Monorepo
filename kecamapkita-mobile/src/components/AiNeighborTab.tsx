@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 
+import * as Location from 'expo-location';
+
 export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([
-    { text: "Halo tetangga! Saya Pak RT. Saya sudah terhubung dengan sistem AI (Gemini). Coba tanya saya sesuatu!", sender: 'bot' }
+    { text: "Halo tetangga! Saya Pak RT. Saya sudah terhubung dengan sistem AI dan database peta kita. Coba tanya saya sesuatu (misal: 'ada tempat ngopi dekat sini?')", sender: 'bot' }
   ]);
 
   const handleSend = async () => {
@@ -17,17 +19,34 @@ export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
     setIsLoading(true);
 
     try {
-        const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "MASUKKAN_API_KEY_ANDA_DI_SINI"; 
-        // Peringatan: Menulis API Key langsung di kode frontend (hardcode) sebenarnya tidak aman untuk rilis publik (Production),
-        // namun ini sangat cocok untuk tahap demo lokal (tanpa perlu menyalakan backend Python).
+        const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:8000';
         
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+        // Ambil lokasi GPS secara real-time untuk diberikan ke Pak RT
+        let lat = 0;
+        let lng = 0;
+        let districtName = "Tidak Diketahui";
+        
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status === 'granted') {
+            const loc = await Location.getCurrentPositionAsync({});
+            lat = loc.coords.latitude;
+            lng = loc.coords.longitude;
+            
+            // Tanya ke Google/OS nama jalan/kecamatannya!
+            const geocode = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+            if (geocode && geocode.length > 0) {
+                districtName = geocode[0].district || geocode[0].city || geocode[0].subregion || "Tidak Diketahui";
+            }
+        }
+        
+        const response = await fetch(`${API_URL}/api/ai/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: `System: Kamu adalah "Pak RT" dari KecamapKita. Jawab dengan ramah, peduli tetangga, gaya santai/slang, dan berikan rekomendasi wisata. \nUser: ${userMessage}` }]
-                }]
+                message: userMessage,
+                lat: lat,
+                lng: lng,
+                district: districtName // Kirim nama wilayah asli!
             })
         });
         
@@ -37,20 +56,17 @@ export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
         }
         const data = await response.json();
         
-        // Ekstraksi jawaban dari format JSON Gemini REST API
-        const aiReply = data.candidates[0].content.parts[0].text;
-        
-        setMessages(prev => [...prev, { text: aiReply, sender: 'bot' }]);
+        setMessages(prev => [...prev, { text: data.reply, sender: 'bot' }]);
     } catch (error: any) {
-        console.log("Error dari Google:", error.message);
-        setMessages(prev => [...prev, { text: `⚠️ Gagal (API Error): ${error.message.substring(0, 150)}...`, sender: 'bot' }]);
+        console.log("Error dari Backend:", error.message);
+        setMessages(prev => [...prev, { text: `⚠️ Gagal menghubungi server kita: ${error.message.substring(0, 150)}...`, sender: 'bot' }]);
     } finally {
         setIsLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 70} style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#fafafa' }]}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 70} style={[{ flex: 1 }, styles.container, { backgroundColor: isDark ? '#09090b' : '#fafafa' }]}>
       <View style={[styles.header, { backgroundColor: isDark ? '#18181b' : '#ffffff', borderBottomColor: isDark ? '#27272a' : '#f4f4f5' }]}>
         <View style={[styles.avatarBox, { backgroundColor: isDark ? '#064e3b' : '#e6f7ee' }]}>
             <Text style={styles.avatarEmoji}>👨🏽‍🦳</Text>

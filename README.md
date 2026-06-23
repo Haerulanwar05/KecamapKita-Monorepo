@@ -44,10 +44,11 @@ Proyek ini dibangun menggunakan arsitektur modern yang memisahkan antara *Backen
 
 ## ✨ Fitur Utama (Highlight)
 
-1. **Eksplorasi Vibe-Based:** Pengguna dapat menyaring destinasi wisata berdasarkan *vibe* (Contoh: `#Syahdu`, `#Kenyang`, `#Kreatif`).
-2. **Kalkulasi Jarak Real-Time:** Menghitung jarak presisi ke destinasi dengan radius kelengkungan bumi (ST_DistanceSphere).
-3. **Asisten AI "Pak RT":** Integrasi API langsung dengan *Gemini 3.5 Flash* yang merespons pertanyaan secara *context-aware* (tahu posisi kecamatan pengguna).
-4. **Sistem Pangkat Petualangan:** 
+1. **Eksplorasi Vibe-Based & Dynamic OSM Fetching:** Pengguna dapat menyaring destinasi wisata berdasarkan *vibe*. Jika database lokal kosong (radius >15KM), sistem secara diam-diam memanggil **Overpass API (OpenStreetMap)** untuk menyajikan data wisata asli secara *real-time* di manapun pengguna berada!
+2. **Kalkulasi Jarak Real-Time:** Menghitung jarak presisi ke destinasi dengan radius kelengkungan bumi (PostGIS ST_DistanceSphere) yang terintegrasi dengan Google Maps/Apple Maps Routing.
+3. **Asisten AI "Pak RT":** Integrasi API langsung dengan *Gemini 3.5 Flash* yang merespons pertanyaan secara *context-aware* (tahu persis posisi pengguna berkat *Reverse Geocoding*).
+4. **Keamanan Akun & Gamifikasi:** Sistem autentikasi pengguna dengan *JWT Token*, *SHA256 Hashing*, dan *Secure Store* di aplikasi Mobile. Sesi log masuk akan menyimpan *Poin XP* petualangan.
+5. **Sistem Pangkat Petualangan:** 
    - 🥚 Level 1: Pendatang Baru
    - 🐣 Level 2: Langkah Pertama
    - 🚶🏽‍♂️ Level 3: Penjelajah Santai

@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { FontAwesome5 } from '@expo/vector-icons';
+import * as SecureStore from 'expo-secure-store';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.5:8000';
 
 const rankSystem = [
     { minXp: 0, maxXp: 149, title: "Pendatang Baru", level: 1, emoji: "🥚", nextThreshold: 150 },
@@ -12,9 +15,81 @@ const rankSystem = [
 ];
 
 export default function AdventureTab({ isDark }: { isDark: boolean }) {
-  const [xp, setXp] = useState(0); // Set to 0 to match screenshot
+  const [xp, setXp] = useState(0); 
   const [levelUpTriggered, setLevelUpTriggered] = useState(false);
   const [activeTimeFilter, setActiveTimeFilter] = useState('all');
+  
+  const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
+  const checkLoginStatus = async () => {
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      if (token) fetchUserData(token);
+    } catch (e) { console.log('Error checking token'); }
+  };
+
+  const fetchUserData = async (token: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+        setXp(data.total_xp);
+      } else {
+        await SecureStore.deleteItemAsync('userToken');
+      }
+    } catch (e) { console.log(e); }
+  };
+
+  const handleAuth = async () => {
+    if (!username || !password || (!isLoginMode && !email)) return Alert.alert('Error', 'Harap isi semua kolom');
+    setIsLoading(true);
+    try {
+      const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+      const body = isLoginMode ? { username, password } : { username, password, email, display_name: username };
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        Alert.alert('Gagal', data.detail || 'Terjadi kesalahan');
+      } else {
+        if (!isLoginMode) {
+          Alert.alert('Sukses', 'Akun dibuat! Silakan masuk.');
+          setIsLoginMode(true);
+        } else {
+          await SecureStore.setItemAsync('userToken', data.access_token);
+          setUser(data.user);
+          setXp(data.user.total_xp);
+          setShowAuthModal(false);
+          Alert.alert('Sukses', 'Berhasil masuk!');
+        }
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Gagal menyambung ke server');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await SecureStore.deleteItemAsync('userToken');
+    setUser(null);
+    setXp(0);
+  };
 
   const getCurrentRank = () => rankSystem.find(r => xp >= r.minXp && xp <= r.maxXp) || rankSystem[0];
   const currentRank = getCurrentRank();
@@ -74,11 +149,11 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
           <View style={[styles.gridStats, { borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
               <View style={styles.gridStatCol}>
                   <Text style={styles.gridStatLabel}>KUNJUNGAN</Text>
-                  <Text style={[styles.gridStatValue, { color: isDark ? '#ffffff' : '#18181b' }]}>0</Text>
+                  <Text style={[styles.gridStatValue, { color: isDark ? '#ffffff' : '#18181b' }]}>{user ? user.checkin_count : 0}</Text>
               </View>
               <View style={[styles.gridStatCol, { borderLeftWidth: 1, borderRightWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                   <Text style={styles.gridStatLabel}>DISTRIK</Text>
-                  <Text style={[styles.gridStatValue, { color: isDark ? '#ffffff' : '#18181b' }]}>0</Text>
+                  <Text style={[styles.gridStatValue, { color: isDark ? '#ffffff' : '#18181b' }]}>{user ? user.district_count : 0}</Text>
               </View>
               <View style={styles.gridStatCol}>
                   <Text style={styles.gridStatLabel}>TOTAL XP</Text>
@@ -88,15 +163,27 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
       </View>
 
       {/* Sync Promo Banner */}
-      <View style={[styles.promoBanner, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.2)' }]}>
-          <View style={{flex: 1, paddingRight: 12}}>
-              <Text style={[styles.promoTitle, { color: isDark ? '#fbbf24' : '#b45309' }]}>AMANKAN PERJALANANMU!</Text>
-              <Text style={[styles.promoDesc, { color: isDark ? '#a1a1aa' : '#71717a' }]}>Anda bermain sebagai Tamu. Buat akun gratis untuk mengunci XP & lencana Anda di awan.</Text>
+      {!user ? (
+          <View style={[styles.promoBanner, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.2)' }]}>
+              <View style={{flex: 1, paddingRight: 12}}>
+                  <Text style={[styles.promoTitle, { color: isDark ? '#fbbf24' : '#b45309' }]}>AMANKAN PERJALANANMU!</Text>
+                  <Text style={[styles.promoDesc, { color: isDark ? '#a1a1aa' : '#71717a' }]}>Anda bermain sebagai Tamu. Buat akun gratis untuk mengunci XP & lencana Anda di awan.</Text>
+              </View>
+              <TouchableOpacity style={styles.promoBtn} onPress={() => setShowAuthModal(true)}>
+                  <Text style={styles.promoBtnText}>Daftar / Masuk</Text>
+              </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.promoBtn}>
-              <Text style={styles.promoBtnText}>Daftar</Text>
-          </TouchableOpacity>
-      </View>
+      ) : (
+          <View style={[styles.promoBanner, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)' }]}>
+              <View style={{flex: 1, paddingRight: 12}}>
+                  <Text style={[styles.promoTitle, { color: isDark ? '#34d399' : '#059669' }]}>TERHUBUNG SEBAGAI {user.username.toUpperCase()}</Text>
+                  <Text style={[styles.promoDesc, { color: isDark ? '#a1a1aa' : '#71717a' }]}>Progress petualangan Anda selalu tersimpan dengan aman di awan.</Text>
+              </View>
+              <TouchableOpacity style={[styles.promoBtn, {backgroundColor: '#ef4444'}]} onPress={handleLogout}>
+                  <Text style={styles.promoBtnText}>Keluar</Text>
+              </TouchableOpacity>
+          </View>
+      )}
 
       {/* History Filter Section */}
       <View style={styles.sectionHeader}>
@@ -200,9 +287,77 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
           </View>
       </View>
 
-      <TouchableOpacity style={styles.testBtn} onPress={simulateCheckIn}>
-          <Text style={styles.testBtnText}>Tandai Kunjungan (MOCK API +150 XP)</Text>
-      </TouchableOpacity>
+      {!user && (
+          <TouchableOpacity style={styles.testBtn} onPress={simulateCheckIn}>
+              <Text style={styles.testBtnText}>Tandai Kunjungan (MOCK API +150 XP)</Text>
+          </TouchableOpacity>
+      )}
+
+      {/* Auth Modal */}
+      <Modal visible={showAuthModal} transparent animationType="fade">
+          <View style={styles.authModalOverlay}>
+              <View style={[styles.authModalContent, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+                  <Text style={[styles.authTitle, { color: isDark ? '#ffffff' : '#18181b' }]}>
+                      {isLoginMode ? 'Selamat Datang' : 'Buat Akun'}
+                  </Text>
+                  <Text style={[styles.authSubtitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
+                      {isLoginMode ? 'Masuk untuk melanjutkan petualangan' : 'Daftar agar XP tidak hilang'}
+                  </Text>
+                  
+                  <TextInput
+                      style={[styles.input, { color: isDark ? '#ffffff' : '#18181b', borderColor: isDark ? '#3f3f46' : '#e4e4e7' }]}
+                      placeholder="Username"
+                      placeholderTextColor={isDark ? '#71717a' : '#a1a1aa'}
+                      value={username}
+                      onChangeText={setUsername}
+                      autoCapitalize="none"
+                  />
+                  
+                  {!isLoginMode && (
+                      <TextInput
+                          style={[styles.input, { color: isDark ? '#ffffff' : '#18181b', borderColor: isDark ? '#3f3f46' : '#e4e4e7' }]}
+                          placeholder="Email"
+                          placeholderTextColor={isDark ? '#71717a' : '#a1a1aa'}
+                          value={email}
+                          onChangeText={setEmail}
+                          autoCapitalize="none"
+                          keyboardType="email-address"
+                      />
+                  )}
+                  
+                  <View style={[styles.passwordContainer, { borderColor: isDark ? '#3f3f46' : '#e4e4e7', backgroundColor: 'transparent' }]}>
+                      <TextInput
+                          style={[styles.passwordInput, { color: isDark ? '#ffffff' : '#18181b' }]}
+                          placeholder="Password"
+                          placeholderTextColor={isDark ? '#71717a' : '#a1a1aa'}
+                          value={password}
+                          onChangeText={setPassword}
+                          secureTextEntry={!showPassword}
+                      />
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                          <FontAwesome5 name={showPassword ? "eye" : "eye-slash"} size={14} color={isDark ? '#a1a1aa' : '#71717a'} />
+                      </TouchableOpacity>
+                  </View>
+                  
+                  <TouchableOpacity style={styles.authSubmitBtn} onPress={handleAuth} disabled={isLoading}>
+                      {isLoading ? <ActivityIndicator color="#fff" /> : (
+                          <Text style={styles.authSubmitText}>{isLoginMode ? 'Masuk' : 'Daftar Sekarang'}</Text>
+                      )}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={styles.authSwitchBtn} onPress={() => setIsLoginMode(!isLoginMode)}>
+                      <Text style={[styles.authSwitchText, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
+                          {isLoginMode ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk'}
+                      </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={{marginTop: 20, alignItems: 'center'}} onPress={() => setShowAuthModal(false)}>
+                      <Text style={{color: '#ef4444', fontWeight: 'bold'}}>Batal</Text>
+                  </TouchableOpacity>
+              </View>
+          </View>
+      </Modal>
+
     </ScrollView>
   );
 }
@@ -466,5 +621,74 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 12,
+  },
+  authModalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20
+  },
+  authModalContent: {
+      width: '100%',
+      borderRadius: 20,
+      padding: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.25,
+      shadowRadius: 15,
+      elevation: 10,
+  },
+  authTitle: {
+      fontWeight: 'bold',
+      fontSize: 24,
+      marginBottom: 8,
+      textAlign: 'center'
+  },
+  authSubtitle: {
+      fontSize: 14,
+      marginBottom: 24,
+      textAlign: 'center'
+  },
+  input: {
+      borderWidth: 1,
+      borderRadius: 12,
+      padding: 14,
+      fontSize: 14,
+      marginBottom: 16
+  },
+  passwordContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderRadius: 12,
+      marginBottom: 16
+  },
+  passwordInput: {
+      flex: 1,
+      padding: 14,
+      fontSize: 14
+  },
+  eyeIcon: {
+      padding: 14
+  },
+  authSubmitBtn: {
+      backgroundColor: '#0f9f59',
+      padding: 16,
+      borderRadius: 12,
+      alignItems: 'center',
+      marginTop: 8
+  },
+  authSubmitText: {
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: 16
+  },
+  authSwitchBtn: {
+      marginTop: 20,
+      alignItems: 'center'
+  },
+  authSwitchText: {
+      fontSize: 14
   }
 });
