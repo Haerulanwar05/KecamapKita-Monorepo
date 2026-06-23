@@ -44,5 +44,11 @@
 - [ ] **Lencana Pencapaian Dinamis:** Progres *Badge* (Penyembuh Jiwa, Kolektor Rasa, dll.) masih ditulis manual 0/2. Perlu logika dari Backend untuk menghitung berapa banyak *vibe* spesifik yang sudah dikunjungi pengguna.
 - [ ] **AI Advice di ExploreTab:** Nasihat Pak RT di *ExploreTab* (💡 REKOMENDASI PAK RT) masih bersifat teks statis "Cobain datang dan rasakan suasananya langsung!". Jika memungkinkan, *Backend* harus memberikan teks unik untuk setiap spot.
 
+### 5. Optimasi Sistem & Skalabilitas (Arsitektur Jangka Panjang)
+- [ ] **Caching OSM Data (Backend):** Saat ini *Backend* memanggil API OpenStreetMap setiap kali ada pengguna membuka *ExploreTab* di area kosong. Jika jumlah pengguna meledak, IP server kita bisa diblokir sementara (*Rate Limit*). Dibutuhkan sistem *Cache* (Redis / In-memory) untuk menyimpan hasil OSM selama 1-24 jam.
+- [ ] **Sinkronisasi State Antar Tab (Frontend):** Jika pengguna melakukan *Check-in* di `ExploreTab` (mendapat +150 XP), lalu pindah ke `AdventureTab`, poin XP tersebut belum diperbarui di layar karena *AdventureTab* tidak otomatis memanggil ulang fungsi `fetchUserData`. Solusi termudah adalah menggunakan `useFocusEffect` di React Navigation atau *Global State* (seperti Zustand / Redux).
+- [ ] **Label Kecamatan Hardcode (Frontend UI):** Di `ExploreTab.tsx`, *badge* nama kecamatan pada kartu wisata masih tertulis *"KEC. DESTINASI"* secara *hardcode*, alih-alih menggunakan nama kecamatan yang didapat dari Reverse Geocoding.
+- [ ] **Proteksi Geocoding (Frontend Error Handling):** Modul `expo-location` berpotensi memicu *silent crash* di OS Android jika layanan *Google Play Services* pengguna mati/bermasalah. Perlu perisai *try-catch* ekstra kuat di bagian `Location.reverseGeocodeAsync`.
+
 ---
 > **Catatan Penulis:** *File ini bersifat sementara untuk *tracking* sisa tugas sebelum aplikasi benar-benar di-deploy ke produksi/Play Store.*
