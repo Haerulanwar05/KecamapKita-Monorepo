@@ -165,7 +165,8 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around', // Membagi jarak tombol secara rata
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'android' ? 28 : 12,
     borderTopWidth: 1,
     borderTopColor: '#f4f4f5',
     backgroundColor: '#ffffff',

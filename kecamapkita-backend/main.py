@@ -13,7 +13,9 @@ app = FastAPI(title="KecamapKita Spatial Backend")
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "123anwarjakarta?")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    raise ValueError("FATAL: JWT_SECRET_KEY is not set in environment!")
 ALGORITHM = "HS256"
 
 async def get_current_user_id(authorization: str = Header(None)):
@@ -35,14 +37,14 @@ def calculate_level(xp: int) -> int:
 
 @app.get("/api/spots", response_model=list[SpotResponse])
 async def get_spots(lat: float, lng: float, vibe: str = "all", weather_state: str = "clear", db: AsyncSession = Depends(get_db)):
-    client_point = f"POINT({lng} {lat})"
+    client_point = func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326)
     
     # query spots with distance
     query = select(
         Spot, 
         func.ST_Y(Spot.geom).label("lat"), 
         func.ST_X(Spot.geom).label("lng"),
-        func.ST_DistanceSphere(Spot.geom, func.ST_GeomFromText(client_point, 4326)).label("distance")
+        func.ST_DistanceSphere(Spot.geom, client_point).label("distance")
     )
     if vibe != "all":
         query = query.where(Spot.vibe == vibe)
@@ -69,9 +71,9 @@ async def get_spots(lat: float, lng: float, vibe: str = "all", weather_state: st
 
 @app.post("/api/spots/{spot_id}/checkin", response_model=CheckinResponse)
 async def checkin(spot_id: int, payload: CheckinBase, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
-    client_point = f"POINT({payload.lng} {payload.lat})"
+    client_point = func.ST_SetSRID(func.ST_MakePoint(payload.lng, payload.lat), 4326)
     
-    query = select(func.ST_DistanceSphere(Spot.geom, func.ST_GeomFromText(client_point, 4326))).where(Spot.id == spot_id)
+    query = select(func.ST_DistanceSphere(Spot.geom, client_point)).where(Spot.id == spot_id)
     result = await db.execute(query)
     distance = result.scalar_one_or_none()
     
@@ -89,7 +91,8 @@ async def checkin(spot_id: int, payload: CheckinBase, db: AsyncSession = Depends
     total_xp = 0
     
     if user_id:
-        user = await db.get(User, user_id)
+        result = await db.execute(select(User).where(User.id == user_id).with_for_update())
+        user = result.scalar_one_or_none()
         if user:
             old_level = user.level
             user.total_xp += 150
@@ -115,10 +118,10 @@ async def checkin(spot_id: int, payload: CheckinBase, db: AsyncSession = Depends
 
 @app.post("/api/ai/chat")
 async def chat_ai(payload: ChatRequest, db: AsyncSession = Depends(get_db)):
-    client_point = f"POINT({payload.lng} {payload.lat})"
+    client_point = func.ST_SetSRID(func.ST_MakePoint(payload.lng, payload.lat), 4326)
     
     kecamatan_query = select(Kecamatan.name).where(
-        func.ST_Contains(Kecamatan.geom, func.ST_GeomFromText(client_point, 4326))
+        func.ST_Contains(Kecamatan.geom, client_point)
     )
     result = await db.execute(kecamatan_query)
     active_kec_name = result.scalar_one_or_none() or "Tidak diketahui"
@@ -129,6 +132,6 @@ Lokasi pengguna saat ini (terdeteksi dari sub-distrik): {active_kec_name}.
 Tugas: Jawab pertanyaan terkait wisata lokal, cuaca, dan tempat hangout."""
 
     model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_prompt)
-    response = await model.generate_content(payload.message)
+    response = await model.generate_content_async(payload.message)
     
     return {"reply": response.text, "kecamatan_detected": active_kec_name}
