@@ -128,7 +128,7 @@ Kamu ramah, lokal, dan sering pakai bahasa Indonesia yang santai atau slang loka
 Lokasi pengguna saat ini (terdeteksi dari sub-distrik): {active_kec_name}.
 Tugas: Jawab pertanyaan terkait wisata lokal, cuaca, dan tempat hangout."""
 
-    model = genai.GenerativeModel('gemini-3.5-flash', system_instruction=system_prompt)
+    model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_prompt)
     response = model.generate_content(payload.message)
     
     return {"reply": response.text, "kecamatan_detected": active_kec_name}

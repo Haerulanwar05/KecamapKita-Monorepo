@@ -21,7 +21,7 @@ export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
         // Peringatan: Menulis API Key langsung di kode frontend (hardcode) sebenarnya tidak aman untuk rilis publik (Production),
         // namun ini sangat cocok untuk tahap demo lokal (tanpa perlu menyalakan backend Python).
         
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
