@@ -23,8 +23,11 @@ COPY --from=builder /install /usr/local
 # Copy application source
 COPY . .
 
-# Expose standard FastAPI port
-EXPOSE 8000
+# Jalankan seed untuk membuat database SQLite awal
+RUN python seed.py
 
-# Start Uvicorn worker (single worker required for SQLite file concurrency)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Hugging Face Spaces memerlukan port 7860
+EXPOSE 7860
+
+# Start Uvicorn worker pada port 7860
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
