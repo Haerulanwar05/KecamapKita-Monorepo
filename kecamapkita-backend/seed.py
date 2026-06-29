@@ -1,5 +1,4 @@
 import asyncio
-from geoalchemy2.elements import WKTElement
 from database import engine, AsyncSessionLocal
 from models import Base, Kecamatan, Spot
 
@@ -105,21 +104,17 @@ mockSpots = [
 
 async def seed():
     async with engine.begin() as conn:
-        from sqlalchemy import text
-        # Create extension if not exists
-        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
         
     async with AsyncSessionLocal() as session:
         # Seed Kecamatan
         for name, polygon in mockKecamatan.items():
-            k = Kecamatan(name=name, geom=WKTElement(polygon, srid=4326))
+            k = Kecamatan(name=name, lat=-6.2000, lng=106.8166)
             session.add(k)
         
         # Seed Spots
         for s in mockSpots:
-            point = f"POINT({s['lng']} {s['lat']})"
             spot = Spot(
                 id=s['id'],
                 name=s['name'],
@@ -134,7 +129,8 @@ async def seed():
                 crowdedness_siang=s['crowdedness']['siang'],
                 crowdedness_sore=s['crowdedness']['sore'],
                 crowdedness_malam=s['crowdedness']['malam'],
-                geom=WKTElement(point, srid=4326)
+                lat=s['lat'],
+                lng=s['lng']
             )
             session.add(spot)
             

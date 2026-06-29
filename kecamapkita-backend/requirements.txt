@@ -1,8 +1,7 @@
 fastapi
 uvicorn
 sqlalchemy
-geoalchemy2
-asyncpg
+aiosqlite
 python-dotenv
 pyjwt
 pydantic

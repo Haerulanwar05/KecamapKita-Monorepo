@@ -15,7 +15,7 @@ import datetime
 
 from database import get_db
 from models import Spot, Kecamatan, Checkin, User
-from schemas import SpotResponse, CheckinBase, CheckinResponse, ChatRequest, UserCreate, LoginRequest, UserResponse
+from schemas import SpotResponse, CheckinBase, CheckinResponse, ChatRequest, UserCreate, LoginRequest, UserResponse, UserProfileData, AvatarUpdateRequest, CheckinHistoryItem, BadgeItem
 
 app = FastAPI(title="KecamapKita Spatial Backend")
 
@@ -90,17 +90,47 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
         "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)
     }
     token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=ALGORITHM)
-    # Get stats
-    checkin_res = await db.execute(select(func.count(Checkin.id)).where(Checkin.user_id == user.id))
-    c_count = checkin_res.scalar() or 0
+    profile_data = await build_user_profile_data(user, db)
+    
+    return {"access_token": token, "token_type": "bearer", "user": profile_data}
+
+async def build_user_profile_data(user: User, db: AsyncSession) -> UserProfileData:
+    query = select(Checkin, Spot).join(Spot, Checkin.spot_id == Spot.id).where(Checkin.user_id == user.id).order_by(Checkin.visited_at.desc())
+    res = await db.execute(query)
+    rows = res.all()
+    
+    history = []
+    vibe_counts = {}
+    district_set = set()
+    
+    for checkin, spot in rows:
+        history.append(CheckinHistoryItem(
+            spot_name=spot.name,
+            visited_at=checkin.visited_at,
+            vibe=spot.vibe or "syahdu"
+        ))
+        vibe = (spot.vibe or "").lower()
+        vibe_counts[vibe] = vibe_counts.get(vibe, 0) + 1
+        district_set.add(spot.name.split()[0])
+        
+    c_count = len(rows)
+    d_count = len(district_set)
+    
+    badges = [
+        BadgeItem(name="Penyembuh Jiwa", icon="🌿", current=vibe_counts.get("syahdu", 0), target=2, unlocked=vibe_counts.get("syahdu", 0) >= 2),
+        BadgeItem(name="Kolektor Rasa", icon="🍜", current=vibe_counts.get("kenyang", 0), target=3, unlocked=vibe_counts.get("kenyang", 0) >= 3),
+        BadgeItem(name="Si Paling Kreatif", icon="💡", current=vibe_counts.get("kreatif", 0), target=2, unlocked=vibe_counts.get("kreatif", 0) >= 2),
+        BadgeItem(name="Penjelajah Sejati", icon="🗺️", current=c_count, target=5, unlocked=c_count >= 5),
+    ]
     
     user_dict = UserResponse.model_validate(user).model_dump()
     user_dict["checkin_count"] = c_count
-    user_dict["district_count"] = c_count // 3 if c_count > 0 else 0
+    user_dict["district_count"] = d_count
+    user_dict["id"] = str(user.id)
     
-    return {"access_token": token, "token_type": "bearer", "user": user_dict}
+    return UserProfileData(**user_dict, history=history[:15], badges=badges)
 
-@app.get("/api/auth/me", response_model=UserResponse)
+@app.get("/api/auth/me", response_model=UserProfileData)
 async def get_me(user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     if not user_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -109,16 +139,33 @@ async def get_me(user_id: str = Depends(get_current_user_id), db: AsyncSession =
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    checkin_res = await db.execute(select(func.count(Checkin.id)).where(Checkin.user_id == user_id))
-    c_count = checkin_res.scalar() or 0
-    
-    user_dict = UserResponse.model_validate(user).model_dump()
-    user_dict["checkin_count"] = c_count
-    user_dict["district_count"] = c_count // 3 if c_count > 0 else 0
-    
-    return user_dict
+        
+    return await build_user_profile_data(user, db)
+
+@app.post("/api/user/avatar", response_model=UserProfileData)
+async def update_avatar(req: AvatarUpdateRequest, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    query = select(User).where(User.id == user_id)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.avatar = req.avatar
+    await db.commit()
+    await db.refresh(user)
+    return await build_user_profile_data(user, db)
+
+OSM_CACHE = {}
 
 def fetch_osm_spots_sync(lat: float, lng: float, radius: int = 15000):
+    cache_key = (round(lat, 2), round(lng, 2))
+    now = datetime.datetime.utcnow().timestamp()
+    if cache_key in OSM_CACHE:
+        ts, data = OSM_CACHE[cache_key]
+        if now - ts < 3600:
+            return data
+
     url = "https://overpass-api.de/api/interpreter"
     query = f"""
     [out:json];
@@ -134,49 +181,58 @@ def fetch_osm_spots_sync(lat: float, lng: float, radius: int = 15000):
     try:
         with urllib.request.urlopen(req, timeout=15) as response:
             result = json.loads(response.read().decode('utf-8'))
-            return result.get('elements', [])
+            elements = result.get('elements', [])
+            OSM_CACHE[cache_key] = (now, elements)
+            return elements
     except Exception as e:
         print("OSM Error:", e)
         return []
 
 @app.get("/api/kecamatan/active")
 async def get_active_kecamatan(lat: float, lng: float, db: AsyncSession = Depends(get_db)):
-    client_point = func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326)
-    query = select(Kecamatan).where(func.ST_Contains(Kecamatan.geom, client_point))
+    query = select(Kecamatan)
     result = await db.execute(query)
-    kecamatan = result.scalar_one_or_none()
-    if kecamatan:
-        return {"name": kecamatan.name}
-    return {"name": "Luar Area"}
+    kecamatans = result.scalars().all()
+    
+    # Cari kecamatan terdekat dengan haversine
+    best_name = "Luar Area"
+    min_dist = float("inf")
+    for k in kecamatans:
+        if k.lat != 0.0 and k.lng != 0.0:
+            dist = haversine(lat, lng, k.lat, k.lng)
+            if dist < min_dist and dist < 10000: # Dalam 10km
+                min_dist = dist
+                best_name = k.name
+        elif best_name == "Luar Area":
+            best_name = k.name
+            
+    return {"name": best_name}
 
 @app.get("/api/spots", response_model=list[SpotResponse])
 async def get_spots(lat: float, lng: float, vibe: str = "all", weather_state: str = "clear", db: AsyncSession = Depends(get_db)):
-    client_point = func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326)
-    
-    # query spots with distance, maximum radius 15km (15000 meters)
-    query = select(
-        Spot, 
-        func.ST_Y(Spot.geom).label("lat"), 
-        func.ST_X(Spot.geom).label("lng"),
-        func.ST_DistanceSphere(Spot.geom, client_point).label("distance")
-    ).where(
-        func.ST_DistanceSphere(Spot.geom, client_point) <= 15000
-    )
-    
+    query = select(Spot)
     if vibe != "all":
         query = query.where(Spot.vibe == vibe)
         
     result = await db.execute(query)
-    spots_data = result.all()
+    spots_data = result.scalars().all()
     
     response_spots = []
-    for row in spots_data:
-        spot = row[0]
-        s_dict = spot.__dict__.copy()
-        s_dict["lat"] = row[1]
-        s_dict["lng"] = row[2]
-        s_dict["distance"] = row[3]
-        response_spots.append(SpotResponse(**s_dict))
+    for spot in spots_data:
+        dist = haversine(lat, lng, spot.lat, spot.lng)
+        if dist <= 15000: # Filter radius 15 KM (15000 meter)
+            s_dict = spot.__dict__.copy()
+            s_dict["distance"] = dist
+            v = (spot.vibe or "").lower()
+            if v == "syahdu":
+                s_dict["ai_advice"] = f"Pak RT menyarankan datang pas sore hari ke {spot.name}. Cocok banget buat healing dan melepas penat!"
+            elif v == "kenyang":
+                s_dict["ai_advice"] = f"Wajib cobain kuliner khas di {spot.name}! Kata Pak RT rasanya juara dan harganya ramah di kantong."
+            elif v == "kreatif":
+                s_dict["ai_advice"] = f"Tempat favorit anak muda kreatif! Banyak spot foto estetik di {spot.name} menurut pantauan Pak RT."
+            else:
+                s_dict["ai_advice"] = f"Rekomendasi Pak RT: {spot.name} adalah pilihan tepat untuk menghabiskan waktu luang bersama kerabat!"
+            response_spots.append(SpotResponse(**s_dict))
         
     # Fitur Otomatis: Jika database kosong di area ini, ambil data gratis dari OpenStreetMap (Overpass API)
     if len(response_spots) < 3:
@@ -211,7 +267,8 @@ async def get_spots(lat: float, lng: float, vibe: str = "all", weather_state: st
                     crowdedness_malam=40,
                     lat=e_lat,
                     lng=e_lng,
-                    distance=dist
+                    distance=dist,
+                    ai_advice=f"💡 Pak RT merekomendasikan {name} hasil temuan satelit! Udah terbukti jadi tempat favorit warga lokal."
                 ))
         except Exception as e:
             print("Error fetching OSM:", e)
@@ -226,24 +283,20 @@ async def get_spots(lat: float, lng: float, vibe: str = "all", weather_state: st
 
 @app.post("/api/spots/{spot_id}/checkin", response_model=CheckinResponse)
 async def checkin(spot_id: int, payload: CheckinBase, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
-    client_point = func.ST_SetSRID(func.ST_MakePoint(payload.lng, payload.lat), 4326)
-    
     query = select(Spot).where(Spot.id == spot_id)
     result = await db.execute(query)
     spot = result.scalar_one_or_none()
     
     distance = None
     if spot:
-        query_dist = select(func.ST_DistanceSphere(Spot.geom, client_point)).where(Spot.id == spot_id)
-        result_dist = await db.execute(query_dist)
-        distance = result_dist.scalar_one_or_none()
+        distance = haversine(payload.lat, payload.lng, spot.lat, spot.lng)
     elif payload.spot_lat is not None and payload.spot_lng is not None:
-        distance = haversine(payload.lng, payload.lat, payload.spot_lng, payload.spot_lat) * 1000
+        distance = haversine(payload.lat, payload.lng, payload.spot_lat, payload.spot_lng)
         # Assign checkin to a dummy spot for foreign key
         dummy_query = select(Spot).where(Spot.id == 999999)
         dummy_res = await db.execute(dummy_query)
         if not dummy_res.scalar_one_or_none():
-            dummy_spot = Spot(id=999999, name="Eksplorasi OSM", type="outdoor", vibe="bebas", geom=func.ST_SetSRID(func.ST_MakePoint(0, 0), 4326))
+            dummy_spot = Spot(id=999999, name="Eksplorasi OSM", type="outdoor", vibe="bebas", lat=0.0, lng=0.0)
             db.add(dummy_spot)
             await db.commit()
         spot_id = 999999

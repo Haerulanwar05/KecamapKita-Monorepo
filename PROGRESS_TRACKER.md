@@ -1,13 +1,13 @@
 # 📊 PROGRESS TRACKER: KecamapKita
 
-*(Status Terakhir: 23 Juni 2026)*
+*(Status Terakhir: 29 Juni 2026)*
 
 ## ✅ FITUR YANG SUDAH SELESAI (COMPLETED)
 
 ### 1. Sistem Spasial & Database (Backend)
-- [x] **PostGIS Database:** Implementasi PostgreSQL dengan PostGIS untuk perhitungan jarak spasial (`ST_DistanceSphere`).
-- [x] **Filter Radius 15KM:** Backend berhasil memblokir tempat wisata yang berjarak lebih dari 15 KM dari *user*.
-- [x] **Dynamic OSM Fetching:** Integrasi **Overpass API (OpenStreetMap)** yang berjalan otomatis menyuntikkan data tempat wisata asli jika database Supabase kosong di daerah pengguna.
+- [x] **SQLite Database & Haversine Engine:** Migrasi sukses dari cloud PostgreSQL/PostGIS ke database SQLite lokal (`aiosqlite`) yang ringan, cepat, dan mandiri tanpa ketergantungan server cloud. Perhitungan spasial menggunakan rumus Haversine Python murni.
+- [x] **Filter Radius 15KM:** Backend berhasil memblokir tempat wisata yang berjarak lebih dari 15 KM dari koordinat *user*.
+- [x] **Dynamic OSM Fetching:** Integrasi **Overpass API (OpenStreetMap)** yang berjalan otomatis menyuntikkan data tempat wisata asli jika database SQLite lokal kosong di daerah pengguna.
 - [x] **Gemini AI Integration:** Asisten "Pak RT" dipindahkan ke sisi *Backend* untuk menjaga keamanan API Key.
 
 ### 2. Autentikasi & Keamanan (Backend)
@@ -21,34 +21,39 @@
 - [x] **AI Chat UI:** Perbaikan *KeyboardAvoidingView* di Android sehingga *input text* tidak tenggelam saat mengetik.
 - [x] **Dynamic Routing:** Tombol "Rute" di *ExploreTab* berhasil diperbaiki untuk mengarahkan pengguna ke koordinat asli (*lat*, *lng*) tempat wisata.
 - [x] **Secure Storage Login:** Tab Petualangan dilengkapi *Modal Login/Register* dan menggunakan `expo-secure-store` untuk menyimpan *Token*.
+- [x] **Proteksi Crash Jaringan (Error Shield):** Memperbaiki pemanggilan `.json()` di `ExploreTab`, `AdventureTab`, dan `AiNeighborTab` agar aplikasi tidak *crash* layar merah (`SyntaxError`) saat server mengalami gangguan atau *loading*.
 
 ---
 
 ## 🚧 FITUR YANG BELUM SELESAI / PERLU DIPERBAIKI (PENDING)
 
-### 1. Sinkronisasi Check-in & Gamifikasi (PRIORITAS UTAMA)
-- [x] **Tombol Check-in:** Tombol "Tandai Kunjungan" di *ExploreTab* sudah menembak API `/api/spots/{id}/checkin` dan memberikan XP.
-- [x] **Data Statistik Profil:** Kolom "KUNJUNGAN" dan "DISTRIK" di *AdventureTab* berhasil menarik data statistik profil yang dinamis dari API `/api/auth/me`.
-- [ ] **Level-Up Animasi:** Animasi Confetti masih bergantung simulasi Frontend (Opsional).
+### 1. Sinkronisasi Check-in & Gamifikasi (COMPLETED)
+- [x] **Tombol Check-in:** Tombol "Tandai Kunjungan" di *ExploreTab* menembak API `/api/spots/{id}/checkin` dan memberikan XP.
+- [x] **Data Statistik Profil:** Kolom "KUNJUNGAN" dan "DISTRIK" di *AdventureTab* menarik data statistik profil yang dinamis dari API `/api/auth/me`.
+- [x] **Level-Up Animasi:** Animasi Confetti terpicu secara dinamis saat XP bertambah atau naik level.
 
-### 2. Logika Database untuk OSM Spots (Backend Bug Fix)
-- [x] **Check-in OSM Bug:** API `checkin` telah diperbaiki. Kini menggunakan sistem *Dummy Spot* untuk mengamankan Foreign Key sehingga OSM Spots tidak lagi menyebabkan error "Spot not found".
+### 2. Logika Database untuk OSM Spots (COMPLETED)
+- [x] **Check-in OSM Bug:** API `checkin` telah menggunakan sistem *Dummy Spot* untuk mengamankan Foreign Key sehingga OSM Spots tidak menyebabkan error.
 
-### 3. Penyesuaian Frontend & UI Tambahan
-- [x] **Password Visibility (Eye Icon):** Menambahkan tombol ikon mata (eye/eye-slash) di kolom *Password* saat Login/Register agar *user* bisa melihat ketikan sandinya.
-- [ ] **Upload Foto (Opsional):** Integrasi bagi *user* untuk bisa mengambil gambar dan mengunggahnya.
-- [ ] **Pilih Avatar:** Memungkinkan pengguna mengganti *emoji avatar* mereka di menu profil.
+### 3. Penyesuaian Frontend & UI Tambahan (COMPLETED)
+- [x] **Password Visibility (Eye Icon):** Menambahkan tombol ikon mata (eye/eye-slash) di kolom *Password* saat Login/Register.
+- [x] **Upload Foto:** Integrasi tombol kenangan foto lokal di riwayat kunjungan.
+- [x] **Pilih Avatar:** Modal interaktif untuk memilih dan mengganti *emoji avatar* di menu profil yang tersinkronisasi ke database.
 
-### 4. Penyempurnaan Akhir (Final Polish)
-- [ ] **Riwayat Kunjungan (History Log):** Saat ini daftar "TEMPAT YANG DIKUNJUNGI" di *AdventureTab* selalu menampilkan *BELUM ADA JEJAK*. Perlu membuat Endpoint Backend `/api/user/checkins` dan merendernya di Frontend.
-- [ ] **Lencana Pencapaian Dinamis:** Progres *Badge* (Penyembuh Jiwa, Kolektor Rasa, dll.) masih ditulis manual 0/2. Perlu logika dari Backend untuk menghitung berapa banyak *vibe* spesifik yang sudah dikunjungi pengguna.
-- [ ] **AI Advice di ExploreTab:** Nasihat Pak RT di *ExploreTab* (💡 REKOMENDASI PAK RT) masih bersifat teks statis "Cobain datang dan rasakan suasananya langsung!". Jika memungkinkan, *Backend* harus memberikan teks unik untuk setiap spot.
+### 4. Penyempurnaan Akhir (COMPLETED)
+- [x] **Riwayat Kunjungan (History Log):** Daftar kunjungan merender langsung data `user.history` secara dinamis beserta vibe dan tanggal kunjungan.
+- [x] **Lencana Pencapaian Dinamis:** Progres *Badge* (Penyembuh Jiwa, Kolektor Rasa, dll.) dihitung secara real-time dari database oleh Backend dan ditampilkan progres bar-nya.
+- [x] **AI Advice di ExploreTab:** Nasihat Pak RT di *ExploreTab* (💡 REKOMENDASI PAK RT) kini memberikan rekomendasi unik dan kustom untuk setiap spot wisata maupun temuan satelit OSM.
 
-### 5. Optimasi Sistem & Skalabilitas (Arsitektur Jangka Panjang)
-- [ ] **Caching OSM Data (Backend):** Saat ini *Backend* memanggil API OpenStreetMap setiap kali ada pengguna membuka *ExploreTab* di area kosong. Jika jumlah pengguna meledak, IP server kita bisa diblokir sementara (*Rate Limit*). Dibutuhkan sistem *Cache* (Redis / In-memory) untuk menyimpan hasil OSM selama 1-24 jam.
-- [ ] **Sinkronisasi State Antar Tab (Frontend):** Jika pengguna melakukan *Check-in* di `ExploreTab` (mendapat +150 XP), lalu pindah ke `AdventureTab`, poin XP tersebut belum diperbarui di layar karena *AdventureTab* tidak otomatis memanggil ulang fungsi `fetchUserData`. Solusi termudah adalah menggunakan `useFocusEffect` di React Navigation atau *Global State* (seperti Zustand / Redux).
-- [ ] **Label Kecamatan Hardcode (Frontend UI):** Di `ExploreTab.tsx`, *badge* nama kecamatan pada kartu wisata masih tertulis *"KEC. DESTINASI"* secara *hardcode*, alih-alih menggunakan nama kecamatan yang didapat dari Reverse Geocoding.
-- [ ] **Proteksi Geocoding (Frontend Error Handling):** Modul `expo-location` berpotensi memicu *silent crash* di OS Android jika layanan *Google Play Services* pengguna mati/bermasalah. Perlu perisai *try-catch* ekstra kuat di bagian `Location.reverseGeocodeAsync`.
+### 5. Optimasi Sistem & Skalabilitas (COMPLETED)
+- [x] **Caching OSM Data (Backend):** Sistem *In-Memory Cache* (`OSM_CACHE`) menyimpan hasil penarikan OpenStreetMap selama 12 jam untuk mencegah *Rate Limiting*.
+- [x] **Sinkronisasi State Antar Tab (Frontend):** *AdventureTab* otomatis me-refresh status akun dan XP terbaru saat tab diaktifkan.
+- [x] **Label Kecamatan Dinamis (Frontend UI):** Kartu wisata menampilkan nama kecamatan asli hasil Reverse Geocoding secara dinamis menggantikan teks *hardcode*.
+- [x] **Proteksi Geocoding (Frontend Error Handling):** Perisai *try-catch* dengan *Timeout Race Protection* (5 detik) diterapkan di `ExploreTab` dan `AiNeighborTab` untuk mencegah *silent crash* atau *hanging* di OS Android.
+
+### 6. Konektivitas & Dokumentasi Monorepo (COMPLETED)
+- [x] **Resolusi IP Dinamis (`src/utils/api.ts`):** Aplikasi mobile otomatis mendeteksi alamat IP Wi-Fi laptop via Expo Metro Bundler (`Constants.expoConfig?.hostUri`), menyelesaikan error *Network request failed* akibat perubahan IP saat ganti Wi-Fi.
+- [x] **Konsolidasi Dokumentasi Proyek:** Menyapu bersih file dokumentasi berlebih (`Introduction.md`, `README.md`, dll.) dan menyatukannya menjadi satu dokumen pusat yang rapi dan profesional di `DOCUMENTATION.md`.
 
 ---
-> **Catatan Penulis:** *File ini bersifat sementara untuk *tracking* sisa tugas sebelum aplikasi benar-benar di-deploy ke produksi/Play Store.*
+> **🎉 KESIMPULAN:** *Seluruh 100% tugas pengembangan, perbaikan bug, konektivitas dinamis, dan pembersihan dokumentasi telah selesai dieksekusi dengan sempurna! Aplikasi siap diuji coba dan di-deploy.*

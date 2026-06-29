@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput,
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { FontAwesome5 } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
+import { getApiUrl } from '../utils/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.5:8000';
+const API_URL = getApiUrl();
 
 const rankSystem = [
     { minXp: 0, maxXp: 149, title: "Pendatang Baru", level: 1, emoji: "🥚", nextThreshold: 150 },
@@ -27,6 +28,26 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const avatarsList = ["🤠", "😎", "🚀", "🦊", "👑", "🦁", "🌸", "🔥"];
+
+  const updateAvatar = async (newAvatar: string) => {
+    try {
+      const token = await SecureStore.getItemAsync('userToken');
+      if (!token) return;
+      const res = await fetch(`${API_URL}/api/user/avatar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ avatar: newAvatar })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+        setShowAvatarModal(false);
+        Alert.alert('Sukses', 'Avatar berhasil diganti! 🎉');
+      }
+    } catch (e) { console.log("Gagal ganti avatar", e); }
+  };
 
   useEffect(() => {
     checkLoginStatus();
@@ -63,10 +84,13 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      const data = await res.json();
       if (!res.ok) {
-        Alert.alert('Gagal', data.detail || 'Terjadi kesalahan');
+        const text = await res.text();
+        let errorMsg = 'Terjadi kesalahan pada server';
+        try { errorMsg = JSON.parse(text).detail || errorMsg; } catch {}
+        Alert.alert('Gagal', errorMsg);
       } else {
+        const data = await res.json();
         if (!isLoginMode) {
           Alert.alert('Sukses', 'Akun dibuat! Silakan masuk.');
           setIsLoginMode(true);
@@ -126,9 +150,9 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
           </View>
           
           <View style={styles.rankBox}>
-              <View style={[styles.iconBox, { backgroundColor: isDark ? '#27272a' : '#f4f4f5', borderColor: isDark ? '#3f3f46' : '#e4e4e7' }]}>
-                  <Text style={styles.emoji}>{currentRank.emoji}</Text>
-              </View>
+              <TouchableOpacity onPress={() => user ? setShowAvatarModal(true) : Alert.alert('Info', 'Silakan masuk dulu untuk ganti avatar.')} style={[styles.iconBox, { backgroundColor: isDark ? '#27272a' : '#f4f4f5', borderColor: isDark ? '#3f3f46' : '#e4e4e7' }]}>
+                  <Text style={styles.emoji}>{user?.avatar || currentRank.emoji}</Text>
+              </TouchableOpacity>
               <View style={styles.rankInfo}>
                   <Text style={[styles.rankTitle, { color: isDark ? '#ffffff' : '#18181b' }]}>{currentRank.title}</Text>
                   <Text style={[styles.rankLevel, { color: isDark ? '#a1a1aa' : '#71717a' }]}>Level {currentRank.level}</Text>
@@ -201,12 +225,33 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
           </View>
       </View>
 
-      {/* Empty State History */}
-      <View style={[styles.emptyBox, { borderColor: isDark ? '#27272a' : '#e4e4e7' }]}>
-          <FontAwesome5 name="shoe-prints" size={24} color={isDark ? '#3f3f46' : '#d4d4d8'} style={{marginBottom: 12}} />
-          <Text style={[styles.emptyTitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>BELUM ADA JEJAK</Text>
-          <Text style={[styles.emptyDesc, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Belum ada tempat dikunjungi dalam rentang waktu ini.</Text>
+      {/* History Log */}
+      <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>RIWAYAT KUNJUNGAN</Text>
+          <TouchableOpacity onPress={() => Alert.alert('Unggah Foto 📸', 'Fitur kenangan foto tersimpan di galeri lokal Petualangan Anda!')}>
+              <Text style={{fontSize: 12, color: '#0f9f59', fontWeight: 'bold'}}>+ Foto Kenangan</Text>
+          </TouchableOpacity>
       </View>
+      {user?.history && user.history.length > 0 ? (
+          user.history.map((h: any, idx: number) => (
+              <View key={idx} style={[styles.statCard, { padding: 12, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <Text style={{fontSize: 20, marginRight: 10}}>📍</Text>
+                      <View>
+                          <Text style={{fontWeight: 'bold', color: isDark ? '#fff' : '#18181b'}}>{h.spot_name}</Text>
+                          <Text style={{fontSize: 11, color: '#0f9f59'}}>#{h.vibe}</Text>
+                      </View>
+                  </View>
+                  <Text style={{fontSize: 10, color: '#71717a'}}>{new Date(h.visited_at).toLocaleDateString()}</Text>
+              </View>
+          ))
+      ) : (
+          <View style={[styles.emptyBox, { borderColor: isDark ? '#27272a' : '#e4e4e7' }]}>
+              <FontAwesome5 name="shoe-prints" size={24} color={isDark ? '#3f3f46' : '#d4d4d8'} style={{marginBottom: 12}} />
+              <Text style={[styles.emptyTitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>BELUM ADA JEJAK</Text>
+              <Text style={[styles.emptyDesc, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Belum ada tempat dikunjungi. Coba check-in di Eksplorasi!</Text>
+          </View>
+      )}
 
       {/* Achievements Shelves */}
       <View style={styles.sectionHeader}>
@@ -214,77 +259,35 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
       </View>
       
       <View style={styles.badgeGrid}>
-          {/* Badge 1 */}
-          <View style={[styles.badgeCard, { backgroundColor: isDark ? '#18181b' : '#ffffff', borderColor: isDark ? '#27272a' : '#f4f4f5' }]}>
-              <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 12}}>
-                  <View style={[styles.badgeIconBox, { backgroundColor: isDark ? '#27272a' : '#f4f4f5' }]}>
-                      <FontAwesome5 name="lock" size={14} color="#fbbf24" />
-                  </View>
-                  <View style={{marginLeft: 10, flex: 1}}>
-                      <Text style={[styles.badgeTitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>Penyembuh Jiwa</Text>
-                      <Text style={[styles.badgeDesc, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Kunjungi 2 spot ber-vibe #syahdu</Text>
-                  </View>
+          {user?.badges && user.badges.length > 0 ? (
+              user.badges.map((b: any, idx: number) => {
+                  const pct = Math.min(100, Math.round((b.current / b.target) * 100));
+                  return (
+                      <View key={idx} style={[styles.badgeCard, { backgroundColor: isDark ? '#18181b' : '#ffffff', borderColor: b.unlocked ? '#0f9f59' : (isDark ? '#27272a' : '#f4f4f5') }]}>
+                          <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 12}}>
+                              <View style={[styles.badgeIconBox, { backgroundColor: b.unlocked ? '#e6f7ee' : (isDark ? '#27272a' : '#f4f4f5') }]}>
+                                  <Text style={{fontSize: 16}}>{b.unlocked ? b.icon : '🔒'}</Text>
+                              </View>
+                              <View style={{marginLeft: 10, flex: 1}}>
+                                  <Text style={[styles.badgeTitle, { color: b.unlocked ? '#0f9f59' : (isDark ? '#a1a1aa' : '#71717a') }]}>{b.name}</Text>
+                                  <Text style={[styles.badgeDesc, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Target: {b.target} kunjungan</Text>
+                              </View>
+                          </View>
+                          <View style={styles.badgeProgressHeader}>
+                              <Text style={styles.badgeProgressText}>{b.unlocked ? 'TERBUKA 🎉' : 'PROGRES'}</Text>
+                              <Text style={styles.badgeProgressText}>{b.current}/{b.target}</Text>
+                          </View>
+                          <View style={[styles.badgeProgressBar, { backgroundColor: isDark ? '#27272a' : '#e4e4e7' }]}>
+                              <View style={{ width: `${pct}%`, height: '100%', backgroundColor: '#0f9f59' }} />
+                          </View>
+                      </View>
+                  );
+              })
+          ) : (
+              <View style={[styles.badgeCard, { backgroundColor: isDark ? '#18181b' : '#ffffff', width: '100%' }]}>
+                  <Text style={{color: isDark ? '#a1a1aa' : '#71717a', textAlign: 'center'}}>Masuk akun untuk melihat progres lencana dinamis!</Text>
               </View>
-              <View style={styles.badgeProgressHeader}>
-                  <Text style={styles.badgeProgressText}>PROGRES</Text>
-                  <Text style={styles.badgeProgressText}>0/2</Text>
-              </View>
-              <View style={[styles.badgeProgressBar, { backgroundColor: isDark ? '#27272a' : '#e4e4e7' }]} />
-          </View>
-          
-          {/* Badge 2 */}
-          <View style={[styles.badgeCard, { backgroundColor: isDark ? '#18181b' : '#ffffff', borderColor: isDark ? '#27272a' : '#f4f4f5' }]}>
-              <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 12}}>
-                  <View style={[styles.badgeIconBox, { backgroundColor: isDark ? '#27272a' : '#f4f4f5' }]}>
-                      <FontAwesome5 name="lock" size={14} color="#fbbf24" />
-                  </View>
-                  <View style={{marginLeft: 10, flex: 1}}>
-                      <Text style={[styles.badgeTitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>Kolektor Rasa</Text>
-                      <Text style={[styles.badgeDesc, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Kunjungi 1 kuliner #kenyang</Text>
-                  </View>
-              </View>
-              <View style={styles.badgeProgressHeader}>
-                  <Text style={styles.badgeProgressText}>PROGRES</Text>
-                  <Text style={styles.badgeProgressText}>0/1</Text>
-              </View>
-              <View style={[styles.badgeProgressBar, { backgroundColor: isDark ? '#27272a' : '#e4e4e7' }]} />
-          </View>
-
-          {/* Badge 3 */}
-          <View style={[styles.badgeCard, { backgroundColor: isDark ? '#18181b' : '#ffffff', borderColor: isDark ? '#27272a' : '#f4f4f5' }]}>
-              <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 12}}>
-                  <View style={[styles.badgeIconBox, { backgroundColor: isDark ? '#27272a' : '#f4f4f5' }]}>
-                      <FontAwesome5 name="lock" size={14} color="#fbbf24" />
-                  </View>
-                  <View style={{marginLeft: 10, flex: 1}}>
-                      <Text style={[styles.badgeTitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>Inspirator</Text>
-                      <Text style={[styles.badgeDesc, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Kunjungi 1 tongkrongan #kreatif</Text>
-                  </View>
-              </View>
-              <View style={styles.badgeProgressHeader}>
-                  <Text style={styles.badgeProgressText}>PROGRES</Text>
-                  <Text style={styles.badgeProgressText}>0/1</Text>
-              </View>
-              <View style={[styles.badgeProgressBar, { backgroundColor: isDark ? '#27272a' : '#e4e4e7' }]} />
-          </View>
-
-          {/* Badge 4 */}
-          <View style={[styles.badgeCard, { backgroundColor: isDark ? '#18181b' : '#ffffff', borderColor: isDark ? '#27272a' : '#f4f4f5' }]}>
-              <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 12}}>
-                  <View style={[styles.badgeIconBox, { backgroundColor: isDark ? '#27272a' : '#f4f4f5' }]}>
-                      <FontAwesome5 name="lock" size={14} color="#fbbf24" />
-                  </View>
-                  <View style={{marginLeft: 10, flex: 1}}>
-                      <Text style={[styles.badgeTitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>Kecamap Overlord</Text>
-                      <Text style={[styles.badgeDesc, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Kunjungi 3 kecamatan berbeda</Text>
-                  </View>
-              </View>
-              <View style={styles.badgeProgressHeader}>
-                  <Text style={styles.badgeProgressText}>PROGRES</Text>
-                  <Text style={styles.badgeProgressText}>0/3</Text>
-              </View>
-              <View style={[styles.badgeProgressBar, { backgroundColor: isDark ? '#27272a' : '#e4e4e7' }]} />
-          </View>
+          )}
       </View>
 
       {!user && (
@@ -358,6 +361,25 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
           </View>
       </Modal>
 
+      {/* Avatar Picker Modal */}
+      <Modal visible={showAvatarModal} transparent animationType="slide">
+          <View style={styles.authModalOverlay}>
+              <View style={[styles.authModalContent, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+                  <Text style={[styles.authTitle, { color: isDark ? '#ffffff' : '#18181b' }]}>Pilih Avatar Karakter</Text>
+                  <Text style={[styles.authSubtitle, { color: isDark ? '#a1a1aa' : '#71717a', marginBottom: 20 }]}>Pilih emoji favorit untuk melambangkan gaya penjelajahanmu!</Text>
+                  <View style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 15, marginBottom: 20}}>
+                      {avatarsList.map((av, idx) => (
+                          <TouchableOpacity key={idx} onPress={() => updateAvatar(av)} style={{padding: 15, backgroundColor: isDark ? '#27272a' : '#f4f4f5', borderRadius: 16}}>
+                              <Text style={{fontSize: 32}}>{av}</Text>
+                          </TouchableOpacity>
+                      ))}
+                  </View>
+                  <TouchableOpacity style={[styles.authSubmitBtn, { backgroundColor: '#71717a' }]} onPress={() => setShowAvatarModal(false)}>
+                      <Text style={styles.authSubmitText}>Batal</Text>
+                  </TouchableOpacity>
+              </View>
+          </View>
+      </Modal>
     </ScrollView>
   );
 }

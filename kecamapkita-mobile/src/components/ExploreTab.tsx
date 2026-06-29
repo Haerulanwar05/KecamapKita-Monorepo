@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert, Linki
 import * as Location from 'expo-location';
 import { FontAwesome5 } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
+import { getApiUrl } from '../utils/api';
 
 interface SpotData {
     id: number;
@@ -44,17 +45,19 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
       
       // Ambil nama wilayah asli dari Google/Apple Maps bawaan HP
       try {
-          const geocode = await Location.reverseGeocodeAsync({
+          const geocodePromise = Location.reverseGeocodeAsync({
               latitude: loc.coords.latitude,
               longitude: loc.coords.longitude
           });
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
+          const geocode: any = await Promise.race([geocodePromise, timeoutPromise]);
           if (geocode && geocode.length > 0) {
-              // 'district' biasanya mewakili Kecamatan/Kelurahan di Indonesia
-              const districtName = geocode[0].district || geocode[0].city || geocode[0].subregion || "Tidak Diketahui";
+              const districtName = geocode[0].district || geocode[0].city || geocode[0].subregion || "Destinasi";
               setActiveKecamatan(districtName);
           }
       } catch (e) {
-          console.log("Gagal mendapatkan nama wilayah:", e);
+          console.log("Gagal atau timeout mendapatkan nama wilayah:", e);
+          setActiveKecamatan("Destinasi");
       }
     })();
   }, []);
@@ -64,25 +67,26 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
     if (!location) return;
     const fetchSpots = async () => {
       try {
-        // AWAS: Harus disetel sesuai IP Lokal Wi-Fi Anda!
-        const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:8000'; 
+        // AWAS: Menggunakan resolusi IP dinamis dari Metro Bundler laptop
+        const API_URL = getApiUrl(); 
         
         // Fetch Data Tempat Wisata
         const res = await fetch(`${API_URL}/api/spots?lat=${location.coords.latitude}&lng=${location.coords.longitude}&vibe=all`);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
         const data = await res.json();
         
         if (Array.isArray(data)) {
             const formattedSpots = data.map((s: any) => ({
                 id: s.id,
                 name: s.name,
-                kecamatan: "Destinasi", 
+                kecamatan: activeKecamatan !== "Lokasi Tidak Diketahui" ? activeKecamatan : "Destinasi", 
                 vibe: s.vibe || "syahdu",
                 description: s.description || "Tidak ada deskripsi",
                 image: s.image_url || 'https://images.unsplash.com/photo-1596306499317-8490232098fa?w=800',
                 rating: 4.8, 
                 distance: s.distance ? (s.distance / 1000).toFixed(1) + " km" : "0 km",
                 facilities: ["Area Umum", "Parkir"],
-                aiAdvice: "Cobain datang dan rasakan suasananya langsung!",
+                aiAdvice: s.ai_advice || s.description || "Cobain datang dan rasakan suasananya langsung!",
                 lat: s.lat,
                 lng: s.lng
             }));
@@ -93,7 +97,7 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
       }
     };
     fetchSpots();
-  }, [location]);
+  }, [location, activeKecamatan]);
 
   const openDirections = (lat: number, lng: number, name: string) => {
     const scheme = Platform.select({ ios: 'maps://app?daddr=', android: 'geo:0,0?q=' });
@@ -111,7 +115,7 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
         return;
       }
 
-      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:8000';
+      const API_URL = getApiUrl();
       const body = {
         lat: location.coords.latitude,
         lng: location.coords.longitude,
@@ -128,12 +132,15 @@ export default function ExploreTab({ isDark }: { isDark: boolean }) {
         body: JSON.stringify(body)
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        Alert.alert('Gagal Check-in', data.detail || 'Terjadi kesalahan');
-      } else {
-        Alert.alert('Berhasil! 🎉', 'Kunjungan ditandai! Anda mendapatkan +150 XP. Cek profil Petualangan Anda!');
+        const text = await res.text();
+        let errorMsg = 'Terjadi kesalahan pada server';
+        try { errorMsg = JSON.parse(text).detail || errorMsg; } catch {}
+        Alert.alert('Gagal Check-in', errorMsg);
+        return;
       }
+      const data = await res.json();
+      Alert.alert('Berhasil! 🎉', 'Kunjungan ditandai! Anda mendapatkan +150 XP. Cek profil Petualangan Anda!');
     } catch (e) {
       Alert.alert('Error', 'Gagal menyambung ke server');
     }

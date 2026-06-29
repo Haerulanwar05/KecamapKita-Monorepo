@@ -17,7 +17,7 @@ class LoginRequest(BaseModel):
     password: str
 
 class UserResponse(UserBase):
-    id: UUID
+    id: str
     total_xp: int
     level: int
     checkin_count: Optional[int] = 0
@@ -32,8 +32,8 @@ class CheckinBase(BaseModel):
     spot_lng: Optional[float] = None
 
 class CheckinResponse(BaseModel):
-    id: UUID
-    user_id: Optional[UUID]
+    id: str
+    user_id: Optional[str]
     spot_id: int
     visited_at: datetime
     xp_earned: int
@@ -60,6 +60,7 @@ class SpotResponse(BaseModel):
     lat: float
     lng: float
     distance: Optional[float] = None
+    ai_advice: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -68,3 +69,22 @@ class ChatRequest(BaseModel):
     lat: float
     lng: float
     district: Optional[str] = "Tidak diketahui"
+
+class AvatarUpdateRequest(BaseModel):
+    avatar: str
+
+class CheckinHistoryItem(BaseModel):
+    spot_name: str
+    visited_at: datetime
+    vibe: str
+
+class BadgeItem(BaseModel):
+    name: str
+    icon: str
+    current: int
+    target: int
+    unlocked: bool
+
+class UserProfileData(UserResponse):
+    history: List[CheckinHistoryItem] = []
+    badges: List[BadgeItem] = []

@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Keyboa
 import { FontAwesome5 } from '@expo/vector-icons';
 
 import * as Location from 'expo-location';
+import * as SecureStore from 'expo-secure-store';
+import { getApiUrl } from '../utils/api';
 
 export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
   const [input, setInput] = useState('');
@@ -10,6 +12,29 @@ export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
   const [messages, setMessages] = useState([
     { text: "Halo tetangga! Saya Pak RT. Saya sudah terhubung dengan sistem AI dan database peta kita. Coba tanya saya sesuatu (misal: 'ada tempat ngopi dekat sini?')", sender: 'bot' }
   ]);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const saved = await SecureStore.getItemAsync('chat_history');
+        if (saved) setMessages(JSON.parse(saved));
+      } catch (e) { console.log("Gagal memuat riwayat chat"); }
+    })();
+  }, []);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        await SecureStore.setItemAsync('chat_history', JSON.stringify(messages));
+      } catch (e) { console.log("Gagal simpan riwayat chat"); }
+    })();
+  }, [messages]);
+
+  const clearHistory = async () => {
+    const initialMsg = [{ text: "Halo tetangga! Saya Pak RT. Saya sudah terhubung dengan sistem AI dan database peta kita. Coba tanya saya sesuatu (misal: 'ada tempat ngopi dekat sini?')", sender: 'bot' }];
+    setMessages(initialMsg);
+    await SecureStore.setItemAsync('chat_history', JSON.stringify(initialMsg));
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -19,7 +44,7 @@ export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
     setIsLoading(true);
 
     try {
-        const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:8000';
+        const API_URL = getApiUrl();
         
         // Ambil lokasi GPS secara real-time untuk diberikan ke Pak RT
         let lat = 0;
@@ -32,11 +57,15 @@ export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
             lat = loc.coords.latitude;
             lng = loc.coords.longitude;
             
-            // Tanya ke Google/OS nama jalan/kecamatannya!
-            const geocode = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
-            if (geocode && geocode.length > 0) {
-                districtName = geocode[0].district || geocode[0].city || geocode[0].subregion || "Tidak Diketahui";
-            }
+            // Tanya ke Google/OS nama jalan/kecamatannya dengan timeout protection!
+            try {
+                const geocodePromise = Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
+                const geocode: any = await Promise.race([geocodePromise, timeoutPromise]);
+                if (geocode && geocode.length > 0) {
+                    districtName = geocode[0].district || geocode[0].city || geocode[0].subregion || "Tidak Diketahui";
+                }
+            } catch (e) { console.log("Geocode timeout di chat AI"); }
         }
         
         const response = await fetch(`${API_URL}/api/ai/chat`, {
@@ -75,6 +104,9 @@ export default function AiNeighborTab({ isDark }: { isDark: boolean }) {
             <Text style={[styles.title, { color: isDark ? '#ffffff' : '#18181b' }]}>Pak RT "KecamapKita"</Text>
             <Text style={[styles.subtitle, { color: isDark ? '#34d399' : '#0b8247' }]}>Asisten AI Tetangga • Online</Text>
         </View>
+        <TouchableOpacity onPress={clearHistory} style={{padding: 8}}>
+            <FontAwesome5 name="trash-alt" size={16} color={isDark ? '#ef4444' : '#dc2626'} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.chatArea} contentContainerStyle={{ padding: 20 }}>
