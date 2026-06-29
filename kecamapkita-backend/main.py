@@ -202,6 +202,52 @@ async def update_avatar(req: AvatarUpdateRequest, user_id: str = Depends(get_cur
 
 OSM_CACHE = {}
 
+def get_creative_image_url(name: str, osm_tags: dict, spot_id: int) -> str:
+    if osm_tags.get("image"): return osm_tags.get("image")
+    if osm_tags.get("image_url"): return osm_tags.get("image_url")
+    
+    n = name.lower()
+    if any(k in n for k in ["kopi", "cafe", "kafe", "coffee", "roastery", "nongkrong", "co-working", "coworking"]):
+        photos = [
+            "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=800&q=80"
+        ]
+        return photos[spot_id % len(photos)]
+    if any(k in n for k in ["warung", "makan", "resto", "nasi", "sate", "bakso", "mie", "kedai", "kuliner", "ayam", "bebek"]):
+        photos = [
+            "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80"
+        ]
+        return photos[spot_id % len(photos)]
+    if any(k in n for k in ["taman", "alun", "park", "hutan", "ridge", "green", "sawah", "kebun", "suropati", "pinus"]):
+        photos = [
+            "https://images.unsplash.com/photo-1596306499317-8490232098fa?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1558230315-5927395092cf?auto=format&fit=crop&w=800&q=80"
+        ]
+        return photos[spot_id % len(photos)]
+    if any(k in n for k in ["pantai", "curug", "air terjun", "danau", "situ", "laut", "river", "sungai"]):
+        photos = [
+            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80"
+        ]
+        return photos[spot_id % len(photos)]
+    if any(k in n for k in ["museum", "candi", "monumen", "sejarah", "masjid", "gereja", "puri", "kraton", "galeri"]):
+        photos = [
+            "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=800&q=80"
+        ]
+        return photos[spot_id % len(photos)]
+        
+    default_photos = [
+        "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80"
+    ]
+    return default_photos[spot_id % len(default_photos)]
+
 def fetch_osm_spots_sync(lat: float, lng: float, radius: int = 15000):
     cache_key = (round(lat, 2), round(lng, 2))
     now = datetime.datetime.utcnow().timestamp()
@@ -299,7 +345,7 @@ async def get_spots(lat: float, lng: float, vibe: str = "all", weather_state: st
                     id=spot_id,
                     name=name,
                     description=el.get('tags', {}).get('description', f"Destinasi {name} yang menarik di sekitar Anda."),
-                    image_url="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80",
+                    image_url=get_creative_image_url(name, el.get('tags', {}), spot_id),
                     hours=el.get('tags', {}).get('opening_hours', "08.00 - 18.00"),
                     price="Bervariasi",
                     best_time="Pagi/Sore",
