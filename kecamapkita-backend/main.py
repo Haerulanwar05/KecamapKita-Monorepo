@@ -6,6 +6,7 @@ import json
 import math
 import asyncio
 from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 import google.generativeai as genai
@@ -18,6 +19,14 @@ from models import Spot, Kecamatan, Checkin, User
 from schemas import SpotResponse, CheckinBase, CheckinResponse, ChatRequest, UserCreate, LoginRequest, UserResponse, UserProfileData, AvatarUpdateRequest, CheckinHistoryItem, BadgeItem
 
 app = FastAPI(title="KecamapKita Spatial Backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
