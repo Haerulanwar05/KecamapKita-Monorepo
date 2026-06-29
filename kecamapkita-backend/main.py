@@ -16,7 +16,7 @@ import datetime
 
 from database import get_db
 from models import Spot, Kecamatan, Checkin, User
-from schemas import SpotResponse, CheckinBase, CheckinResponse, ChatRequest, UserCreate, LoginRequest, UserResponse, UserProfileData, AvatarUpdateRequest, CheckinHistoryItem, BadgeItem
+from schemas import SpotResponse, CheckinBase, CheckinResponse, ChatRequest, UserCreate, LoginRequest, GoogleLoginRequest, UserResponse, UserProfileData, AvatarUpdateRequest, CheckinHistoryItem, BadgeItem
 
 app = FastAPI(title="KecamapKita Spatial Backend")
 
@@ -93,6 +93,41 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     
     if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
+        
+    payload = {
+        "sub": str(user.id),
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)
+    }
+    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=ALGORITHM)
+    profile_data = await build_user_profile_data(user, db)
+    
+    return {"access_token": token, "token_type": "bearer", "user": profile_data}
+
+@app.post("/api/auth/google")
+async def google_login(req: GoogleLoginRequest, db: AsyncSession = Depends(get_db)):
+    query = select(User).where(User.email == req.email)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        username_base = req.email.split("@")[0]
+        username = username_base
+        u_query = select(User).where(User.username == username)
+        u_res = await db.execute(u_query)
+        if u_res.first():
+            import random
+            username = f"{username_base}{random.randint(100, 999)}"
+            
+        user = User(
+            username=username,
+            email=req.email,
+            display_name=req.display_name or username,
+            avatar=req.avatar or "🤠",
+            hashed_password=get_password_hash("google_oauth_dummy_secret_pass_99")
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
         
     payload = {
         "sub": str(user.id),

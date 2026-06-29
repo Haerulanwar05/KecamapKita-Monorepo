@@ -109,6 +109,36 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    let googleEmail = email.trim() || username.trim();
+    if (!googleEmail.includes('@')) {
+      googleEmail = googleEmail ? `${googleEmail}@gmail.com` : 'petualang.kecamap@gmail.com';
+    }
+    setIsLoading(true);
+    try {
+      const displayName = googleEmail.split('@')[0];
+      const res = await fetch(`${API_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: googleEmail, display_name: displayName, avatar: "😎" })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        await SecureStore.setItemAsync('userToken', data.access_token);
+        setUser(data.user);
+        setXp(data.user.total_xp);
+        setShowAuthModal(false);
+        Alert.alert('Sukses 🎉', `Berhasil masuk dengan Akun Google (${googleEmail})!`);
+      } else {
+        Alert.alert('Gagal', 'Tidak dapat menghubungkan akun Google.');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Gagal menyambung ke server');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogout = async () => {
     await SecureStore.deleteItemAsync('userToken');
     setUser(null);
@@ -346,6 +376,11 @@ export default function AdventureTab({ isDark }: { isDark: boolean }) {
                       {isLoading ? <ActivityIndicator color="#fff" /> : (
                           <Text style={styles.authSubmitText}>{isLoginMode ? 'Masuk' : 'Daftar Sekarang'}</Text>
                       )}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={[styles.authSubmitBtn, { backgroundColor: '#ea4335', marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]} onPress={handleGoogleLogin} disabled={isLoading}>
+                      <FontAwesome5 name="google" size={16} color="#fff" style={{ marginRight: 10 }} />
+                      <Text style={styles.authSubmitText}>Masuk dengan Akun Google</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity style={styles.authSwitchBtn} onPress={() => setIsLoginMode(!isLoginMode)}>

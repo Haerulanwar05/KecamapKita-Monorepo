@@ -16,6 +16,11 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+class GoogleLoginRequest(BaseModel):
+    email: str
+    display_name: str
+    avatar: Optional[str] = "🤠"
+
 class UserResponse(UserBase):
     id: str
     total_xp: int
